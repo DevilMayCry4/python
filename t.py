@@ -42,16 +42,9 @@ def  login():
 
 def downloadImg(url,name):
 	print('get img '+url)
-	header = { 
-	'User-Agent' : 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)',
-	'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-	'Accept-Language':'en-us,en;q=0.5',
-	'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
-	'Keep-Alive':'115',
-	'Connection': 'keep-alive',
-	 }
-	data = urllib.urlencode(header)
-	req = urllib2.Request(url,  data)
+	req = urllib2.Request(url)
+	req.add_header('User-Agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1')
+	req.add_header('Accept','text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
 	response = urllib2.urlopen(req)
 	the_page = response.read()  
 
@@ -76,12 +69,9 @@ def getTorrent(url):
 	preString = '<br />\r\n<img src="'
 	LastString = '" border' 
 	myItems = re.findall(preString+'.*?" border',unicodePage,re.S)
-	a = 0
 	print(myItems)
 	for item in myItems:
-		if (item.find('.jpg') != -1):
-		    a=a+1
-		    if(a>2):break  
+		if (item.find('.jpg') != -1):  
 		    print(item)      
 		    tmp = item.replace(preString,'')
 		    newItem = tmp.replace(LastString,'')
@@ -104,6 +94,7 @@ def  getHtml(url):
 	    
 
 if __name__ == '__main__':
+	downloadImg('http://img169.com/images/2014/07/24/HODV 20994.jpg','test')
 	login()
 	for a in xrange(2,1000):
 		url = 'forum-58-'+"%u"%a+'.html'
