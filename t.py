@@ -12,7 +12,7 @@ import string
 import re
 
 
-BBSURL = 'http://174.127.195.166/bbs/'
+BBSURL = 'bbs/'
 def  login():
 	#设置一个cookie处理器，它负责从服务器下载cookie到本地，并且在发送请求时带上本地的cookie  
 	cj = cookielib.LWPCookieJar()  
@@ -22,8 +22,8 @@ def  login():
 	postdata = urllib.urlencode({
 		'formhash'   :'9f5eb7fe',
 		'loginfield' :'username',
-		'username'   :'wusky777',
-		'password'   :'19900317', 
+		'username'   :'',
+		'password'   :'', 
 		'cookietime' :'2592000',
 		'referer'    :'index.php',
 		'loginsubmit':'true',
@@ -93,8 +93,7 @@ def  getHtml(url):
 	    getTorrent(newItem)
 	    
 
-if __name__ == '__main__':
-	downloadImg('http://img169.com/images/2014/07/24/HODV 20994.jpg','test')
+if __name__ == '__main__': 
 	login()
 	for a in xrange(2,1000):
 		url = 'forum-58-'+"%u"%a+'.html'
