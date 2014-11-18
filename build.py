@@ -6,7 +6,7 @@ from ftplib import  FTP
 import Foundation, objc,AppKit
 import time
 
-DefaultProjectDir = "/Users/virgil/Documents/InfoClouds/"
+DefaultProjectDir = ""
 OutPutDir = "/Users/virgil/Desktop/"
 
 FTPServer = "10.38.178.77"
@@ -41,12 +41,22 @@ def notify(title, subtitle, info_text, delay=0, sound=False, userInfo={}):
 
 def parseProject(path):
      projectFile = ""
+     if os.path.exists(path) ==False:
+         log("%s 不存在"%path)
+         return []
      for file in  os.listdir(path):
          extentsion =  os.path.splitext(file)[1]
          if extentsion == ".xcodeproj":
              projectFile = file
              break;
-     project = NSDictionary.dictionaryWithContentsOfFile_(path+projectFile+"/project.pbxproj")
+     if len(projectFile)==0:
+         log("没有找到.xcodeproj文件")
+         return []
+     projectFile = os.path.join(path,projectFile,"project.pbxproj")
+     if  os.path.exists(projectFile) == False:
+         log("没有找到.xcodeproj文件")
+         return []
+     project = NSDictionary.dictionaryWithContentsOfFile_(projectFile)
      rootKey = project.objectForKey_("rootObject")
      objects = project.objectForKey_("objects")
      rootObject = objects.objectForKey_(rootKey)
@@ -92,7 +102,9 @@ def ipaName(outPutDir,prodocutName):
     return name
 
 def run_main(PROJDIR):
-
+        if os.path.exists(PROJDIR) == False:
+            log("%s不存在"%PROJDIR)
+            return
         os.chdir(PROJDIR)
         targets = parseProject(PROJDIR)
         targetCount = len(targets)
