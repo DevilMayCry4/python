@@ -3,24 +3,21 @@
 import sys
 import os
 from ftplib import  FTP
-import Foundation, objc
+import Foundation, objc,AppKit
+import time
 
-PROJDIR = "/Users/virgil/Documents/HKDeals7/"
-OutPut = "/Users/virgil/Desktop/"
-SIGN_NAME = "iPhone Distribution: Guangzhou Yuncheng Information Technology Co., Ltd./"
-EMBED = "/Users/virgil/Desktop/iOS_Provisioning_Profile.mobileprovision"
-TARGET_NAME = "HKDeals"
+DefaultProjectDir = "/Users/virgil/Documents/InfoClouds/"
+OutPutDir = "/Users/virgil/Desktop/"
 
-TARGET_SDK = "iphoneos"
-ipa_name ="Test.11.17"
-PROJECT_BUILDDIR = PROJDIR + "build/Release-iphoneos/"
 FTPServer = "10.38.178.77"
 Port = "21"
 UploadDir ="/Fred/"
+IPA_Extentsion = ".ipa"
 
 NSUserNotification = objc.lookUpClass('NSUserNotification')
 NSUserNotificationCenter = objc.lookUpClass('NSUserNotificationCenter')
-
+NSDictionary = objc.lookUpClass('NSDictionary')
+NSPasteboard = objc.lookUpClass('NSPasteboard')
 
 def notify(title, subtitle, info_text, delay=0, sound=False, userInfo={}):
   """ Python method to show a desktop notification on Mountain Lion. Where:
@@ -42,39 +39,114 @@ def notify(title, subtitle, info_text, delay=0, sound=False, userInfo={}):
   notification.setDeliveryDate_(Foundation.NSDate.dateWithTimeInterval_sinceDate_(delay, Foundation.NSDate.date()))
   NSUserNotificationCenter.defaultUserNotificationCenter().scheduleNotification_(notification)
 
-def run_main(read_file):
-        os.chdir(PROJDIR)
-        build_app_command = "xcodebuild -target " + TARGET_NAME + " -sdk " \
-                            + TARGET_SDK + " -configuration Release"
-        os.system(build_app_command)
-        print "*************************"
-        print "build app"+ ipa_name
-        print "*************************"
-        OutPutPath = OutPut + ipa_name.rstrip()+".ipa"
-        build_ipa_command = " ".join(
-            ("/usr/bin/xcrun -sdk iphoneos PackageApplication -v",
-            PROJECT_BUILDDIR + TARGET_NAME + ".app" + " -o",
-           OutPutPath
-            )
-        )
-        print build_ipa_command
-        print "************************"
-        os.system(build_ipa_command)
-        print "*************************"
-        print build_ipa_command
-        print "build ipa"+ ipa_name
-        print "*************************"
-        ftp=FTP()
-        ftp.set_debuglevel(2)
-        ftp.connect(FTPServer,Port)
-        ftp.login()
-        ftp.cwd(UploadDir)
-        ftp.storbinary("stor "+ipa_name+".ipa",open(OutPutPath,"rb"))
-        print("############################")
-        url = "ftp:"+FTPServer+UploadDir+ipa_name+".ipa"
-        print url
-        notify("IPA build finish", ipa_name, url, userInfo={"action":"open_url", "value":url})
+def parseProject(path):
+     projectFile = ""
+     for file in  os.listdir(path):
+         extentsion =  os.path.splitext(file)[1]
+         if extentsion == ".xcodeproj":
+             projectFile = file
+             break;
+     project = NSDictionary.dictionaryWithContentsOfFile_(path+projectFile+"/project.pbxproj")
+     rootKey = project.objectForKey_("rootObject")
+     objects = project.objectForKey_("objects")
+     rootObject = objects.objectForKey_(rootKey)
+     targets = rootObject.objectForKey_("targets")
+     count = targets.count()
+     AllTarget =[]
+     for a in range(0,count):
+         tartgetKey = targets.objectAtIndex_(a)
+         target = objects.objectForKey_(tartgetKey)
+         targetName = target.objectForKey_("name")
+         configKey = target.objectForKey_("buildConfigurationList")
+         config = objects.objectForKey_(configKey)
+         releaseConfigKey = findReleaseConfi(config,objects)
+         releaseConfig = objects.objectForKey_(releaseConfigKey)
+         setting = releaseConfig.objectForKey_("buildSettings")
+         productName= setting.objectForKey_("PRODUCT_NAME")
+         AllTarget.append([targetName,productName])
+     return AllTarget
 
+
+def findReleaseConfi(config,allObject):
+    configs = config.objectForKey_("buildConfigurations")
+    count = configs.count()
+    for a in range (0,count):
+        configKey = configs.objectAtIndex_(a)
+        configObject = allObject.objectForKey_(configKey)
+        if configObject.objectForKey_("name")=="Release":
+            return configKey
+
+def today():
+    today = time.strftime('.%m.%d',time.localtime(time.time()))
+    return today
+
+def ipaName(outPutDir,prodocutName):
+    date = today()
+    name = prodocutName+date+IPA_Extentsion
+    if os.path.exists(outPutDir+name):
+        a = 2
+        name=prodocutName+today()+".%02d"%a+IPA_Extentsion
+        while os.path.exists(outPutDir+name):
+            a=a+1
+            name = prodocutName+date+".%02d"%a+IPA_Extentsion
+    return name
+
+def run_main(PROJDIR):
+
+        os.chdir(PROJDIR)
+        targets = parseProject(PROJDIR)
+        targetCount = len(targets)
+        for a in range(0,targetCount):
+            target = targets[a]
+            targetName = target[0]
+            prodoctName = target[1]
+
+            log("clean target %s"%targetName)
+            clean_command ="xcodebuild -target " + targetName +" clean"
+            os.system(clean_command)
+
+            log("build target %s"%targetName)
+            build_app_command = "xcodebuild -target " + targetName + " -sdk " \
+                            + "iphoneos" + " -configuration Release"
+            os.system(build_app_command)
+
+            log("zip ipa %s"%prodoctName)
+            IPA_Name = ipaName(OutPutDir,prodoctName)
+            OutPutPath = OutPutDir + IPA_Name
+            build_ipa_command = " ".join(
+                ("/usr/bin/xcrun -sdk iphoneos PackageApplication -v",
+                 path+"build/Release-iphoneos/" + prodoctName + ".app" + " -o",
+                 OutPutPath
+                )
+            )
+            print build_ipa_command
+            print "************************"
+            os.system(build_ipa_command)
+            print "*************************"
+            print build_ipa_command
+
+            log("FTP Trans")
+            ftp=FTP()
+            ftp.set_debuglevel(2)
+            ftp.connect(FTPServer,Port)
+            ftp.login()
+            ftp.cwd(UploadDir)
+            ftp.storbinary("stor "+IPA_Name,open(OutPutPath,"rb"))
+            print("############################")
+            url = "ftp:"+FTPServer+UploadDir+IPA_Name
+            print url
+            pasteboard = NSPasteboard.generalPasteboard()
+            pasteboard.clearContents()
+            pasteboard.writeObjects_([url])
+            notify("IPA build finish", IPA_Name, url, userInfo={"action":"open_url", "value":url})
+
+def log(string):
+    print "*************************"
+    print string
+    print "*************************"
 
 if __name__ == "__main__":
-    run_main(sys.argv[0])
+        path = DefaultProjectDir
+        if len(sys.argv) > 1:
+            path = sys.argv[1]
+        run_main(path)
