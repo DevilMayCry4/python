@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 import sys
 import os
@@ -136,22 +136,26 @@ def run_main(PROJDIR):
             log("build target %s"%targetName)
             build_app_command = "xcodebuild -target " + targetName + " -sdk " \
                             + "iphoneos" + " -configuration Release"
-            os.system(build_app_command)
+            result = os.system(build_app_command)
+            if result != 0:
+                log("fail")
+                notify("IPA build fail", prodoctName, "", userInfo={})
+                return
 
             log("zip ipa %s"%prodoctName)
             IPA_Name = ipaName(OutPutDir,prodoctName)
-            OutPutPath = OutPutDir + IPA_Name
-            build_ipa_command = " ".join(
+            OutPutPath = os.path.join(OutPutDir,IPA_Name)
+            packeage_ipa_command = " ".join(
                 ("/usr/bin/xcrun -sdk iphoneos PackageApplication -v",
                  os.path.join(dir,"build/Release-iphoneos/"+prodoctName+".app")+ " -o",
                  OutPutPath
                 )
             )
-            print build_ipa_command
-            print "************************"
-            os.system(build_ipa_command)
-            print "*************************"
-            print build_ipa_command
+            os.system(packeage_ipa_command)
+            if os.path.exists(OutPutPath) == False:
+               log("fail")
+               notify("IPA PackageApplication fail", prodoctName, "", userInfo={})
+               return
 
             log("FTP Trans")
             ftp=FTP()
