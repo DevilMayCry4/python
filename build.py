@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
 import os
@@ -6,13 +6,20 @@ from ftplib import  FTP
 import Foundation, objc,AppKit
 import time
 
-DefaultProjectDir = ""
+#默认的工程文件所在文件夹，也可以在命令行里设置
+DefaultProjectDir = "/Users/virgil/Documents/Epub1/epub.xcodeproj"
+
+#ipa 文件输出的文件夹
 OutPutDir = "/Users/virgil/Desktop/"
 
+#FTP 设置
 FTPServer = "10.38.178.77"
 Port = "21"
 UploadDir ="/Fred/"
+
 IPA_Extentsion = ".ipa"
+ProjectExtentsion =".xcodeproj"
+ProjectFileName = "project.pbxproj"
 
 NSUserNotification = objc.lookUpClass('NSUserNotification')
 NSUserNotificationCenter = objc.lookUpClass('NSUserNotificationCenter')
@@ -44,18 +51,21 @@ def parseProject(path):
      if os.path.exists(path) ==False:
          log("%s 不存在"%path)
          return []
-     for file in  os.listdir(path):
-         extentsion =  os.path.splitext(file)[1]
-         if extentsion == ".xcodeproj":
-             projectFile = file
-             break;
-     if len(projectFile)==0:
-         log("没有找到.xcodeproj文件")
-         return []
-     projectFile = os.path.join(path,projectFile,"project.pbxproj")
-     if  os.path.exists(projectFile) == False:
-         log("没有找到.xcodeproj文件")
-         return []
+     if  os.path.splitext(path)[1] == ProjectExtentsion:
+         projectFile = os.path.join(path,ProjectFileName)
+     else:
+         for file in  os.listdir(path):
+             extentsion =  os.path.splitext(file)[1]
+             if extentsion == ProjectExtentsion:
+                projectFile = file
+                break;
+         if len(projectFile)==0:
+            log("没有找到.xcodeproj文件")
+            return []
+         projectFile = os.path.join(path,projectFile,ProjectFileName)
+         if  os.path.exists(projectFile) == False:
+             log("没有找到.xcodeproj文件")
+             return []
      project = NSDictionary.dictionaryWithContentsOfFile_(projectFile)
      rootKey = project.objectForKey_("rootObject")
      objects = project.objectForKey_("objects")
@@ -66,14 +76,17 @@ def parseProject(path):
      for a in range(0,count):
          tartgetKey = targets.objectAtIndex_(a)
          target = objects.objectForKey_(tartgetKey)
-         targetName = target.objectForKey_("name")
-         configKey = target.objectForKey_("buildConfigurationList")
-         config = objects.objectForKey_(configKey)
-         releaseConfigKey = findReleaseConfi(config,objects)
-         releaseConfig = objects.objectForKey_(releaseConfigKey)
-         setting = releaseConfig.objectForKey_("buildSettings")
-         productName= setting.objectForKey_("PRODUCT_NAME")
-         AllTarget.append([targetName,productName])
+         if target.objectForKey_("productType") == "com.apple.product-type.application":
+             targetName = target.objectForKey_("name")
+             configKey = target.objectForKey_("buildConfigurationList")
+             config = objects.objectForKey_(configKey)
+             releaseConfigKey = findReleaseConfi(config,objects)
+             releaseConfig = objects.objectForKey_(releaseConfigKey)
+             setting = releaseConfig.objectForKey_("buildSettings")
+             productName= setting.objectForKey_("PRODUCT_NAME")
+             if productName == "$(TARGET_NAME)":
+                productName = targetName
+             AllTarget.append([targetName,productName])
      return AllTarget
 
 
@@ -105,7 +118,10 @@ def run_main(PROJDIR):
         if os.path.exists(PROJDIR) == False:
             log("%s不存在"%PROJDIR)
             return
-        os.chdir(PROJDIR)
+        dir = PROJDIR
+        if os.path.splitext(dir)[1] == ProjectExtentsion:
+            dir = os.path.dirname(dir)
+        os.chdir(dir)
         targets = parseProject(PROJDIR)
         targetCount = len(targets)
         for a in range(0,targetCount):
@@ -127,7 +143,7 @@ def run_main(PROJDIR):
             OutPutPath = OutPutDir + IPA_Name
             build_ipa_command = " ".join(
                 ("/usr/bin/xcrun -sdk iphoneos PackageApplication -v",
-                 path+"build/Release-iphoneos/" + prodoctName + ".app" + " -o",
+                 os.path.join(dir,"build/Release-iphoneos/"+prodoctName+".app")+ " -o",
                  OutPutPath
                 )
             )
