@@ -5,12 +5,13 @@ import os
 from ftplib import  FTP
 import Foundation, objc,AppKit
 import time
+import shutil
 
 #默认的工程文件所在文件夹，也可以在命令行里设置
 DefaultProjectDir = "/Users/virgil/Documents/Epub1/epub.xcodeproj"
 
 #ipa 文件输出的文件夹
-OutPutDir = "/Users/virgil/Desktop/"
+OutPutDir = "/Users/virgil/Documents/Archive/"
 
 #FTP 设置
 FTPServer = "10.38.178.77"
@@ -20,6 +21,7 @@ UploadDir ="/Fred/"
 IPA_Extentsion = ".ipa"
 ProjectExtentsion =".xcodeproj"
 ProjectFileName = "project.pbxproj"
+BuildReleaseDir = "build/Release-iphoneos/"
 
 NSUserNotification = objc.lookUpClass('NSUserNotification')
 NSUserNotificationCenter = objc.lookUpClass('NSUserNotificationCenter')
@@ -143,11 +145,14 @@ def run_main(PROJDIR):
                 return
 
             log("zip ipa %s"%prodoctName)
-            IPA_Name = ipaName(OutPutDir,prodoctName)
-            OutPutPath = os.path.join(OutPutDir,IPA_Name)
+            productOutputDir = os.path.join(OutPutDir,targetName)
+            if os.path.exists(productOutputDir) == False:
+                os.mkdir(productOutputDir)
+            IPA_Name = ipaName(productOutputDir,prodoctName)
+            OutPutPath = os.path.join(productOutputDir,IPA_Name)
             packeage_ipa_command = " ".join(
                 ("/usr/bin/xcrun -sdk iphoneos PackageApplication -v",
-                 os.path.join(dir,"build/Release-iphoneos/"+prodoctName+".app")+ " -o",
+                 os.path.join(dir,BuildReleaseDir+prodoctName+".app")+ " -o",
                  OutPutPath
                 )
             )
@@ -156,6 +161,9 @@ def run_main(PROJDIR):
                log("fail")
                notify("IPA PackageApplication fail", prodoctName, "", userInfo={})
                return
+            dsymFile = os.path.join(dir,BuildReleaseDir+prodoctName+".app.dSYM")
+            if os.path.exists(dsymFile):
+                shutil.move(dsymFile,os.path.join(productOutputDir,IPA_Name+".dSYM"))
 
             log("FTP Trans")
             ftp=FTP()
