@@ -173,7 +173,7 @@ def run_main(PROJDIR):
             ftp.cwd(UploadDir)
             ftp.storbinary("stor "+IPA_Name,open(OutPutPath,"rb"))
             print("############################")
-            url = "ftp:"+FTPServer+UploadDir+IPA_Name
+            url = "ftp://"+FTPServer+UploadDir+IPA_Name
             print url
             pasteboard = NSPasteboard.generalPasteboard()
             pasteboard.clearContents()
