@@ -108,10 +108,10 @@ def today():
 def ipaName(outPutDir,prodocutName):
     date = today()
     name = prodocutName+date+IPA_Extentsion
-    if os.path.exists(outPutDir+name):
+    if os.path.exists(os.path.join(outPutDir,name)):
         a = 2
         name=prodocutName+today()+".%02d"%a+IPA_Extentsion
-        while os.path.exists(outPutDir+name):
+        while os.path.exists(os.path.join(outPutDir,name)):
             a=a+1
             name = prodocutName+date+".%02d"%a+IPA_Extentsion
     return name
@@ -150,9 +150,10 @@ def run_main(PROJDIR):
                 os.mkdir(productOutputDir)
             IPA_Name = ipaName(productOutputDir,prodoctName)
             OutPutPath = os.path.join(productOutputDir,IPA_Name)
+            appPath = os.path.join(dir,BuildReleaseDir+prodoctName+".app")
             packeage_ipa_command = " ".join(
                 ("/usr/bin/xcrun -sdk iphoneos PackageApplication -v",
-                 os.path.join(dir,BuildReleaseDir+prodoctName+".app")+ " -o",
+                 appPath + " -o",
                  OutPutPath
                 )
             )
@@ -164,6 +165,8 @@ def run_main(PROJDIR):
             dsymFile = os.path.join(dir,BuildReleaseDir+prodoctName+".app.dSYM")
             if os.path.exists(dsymFile):
                 shutil.move(dsymFile,os.path.join(productOutputDir,IPA_Name+".dSYM"))
+
+            shutil.move(appPath,os.path.join(productOutputDir,IPA_Name+".app"))
 
             log("FTP Trans")
             ftp=FTP()
@@ -186,6 +189,8 @@ def log(string):
     print "*************************"
 
 if __name__ == "__main__":
+        if os.path.exists(OutPutDir) == False:
+            os.mkdir(OutPutDir)
         path = DefaultProjectDir
         if len(sys.argv) > 1:
             path = sys.argv[1]
