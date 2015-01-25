@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xml resultcode='1'>
+<categories>
+	{% for item in item_list %}
+	<category>
+		<id>{{item.categoryId}}</id>
+		<name>{{item.name}}</name>
+		<slug_name>{{item.slug_name}}</slug_name>
+	</category>
+	{% endfor %}
+</categories>
+</xml>

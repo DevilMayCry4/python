@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xml resultcode='1'>
+<offers>
+	{% for item in item_list %}
+	<offer id='{{item.item_id}}' ccode='{{item.ccode}}'>
+    {% autoescape off %}
+	<title><![CDATA[{{item.title|safe}}]]></title>
+    <short_title><![CDATA[{{item.short_title|safe}}]]></short_title>
+    <desc><![CDATA[{{item.desc|safe}}]]></desc>
+    <disclaimer><![CDATA[{{item.disclaimer|safe}}]]></disclaimer>
+    <highlights><![CDATA[{{item.highlights|safe}}]]></highlights>
+    <imgs>{{item.getImgs|safe}}</imgs>
+    <price>{{item.price}}</price>
+    <value>{{ item.value }}</value>
+    <discount>{{ item.discount }}</discount>
+    <discount_display_type>{{ item.discount_display_type }}</discount_display_type>
+    <is_hide_sold_quantity>{{ item.is_hide_sold_quantity }}</is_hide_sold_quantity>
+    <sold_quantity>10</sold_quantity>
+    <is_paperless>{{ item.is_paperless }}</is_paperless>
+    <quantity>{{ item.quantity }}</quantity>
+    <max_purchase_quantity>{{ item.max_purchase_quantity }}</max_purchase_quantity>
+    <deal_on_quantity>{{ item.deal_on_quantity }}</deal_on_quantity>
+    <display_weight>{{ item.display_weight }}</display_weight>
+    <start_date>{{ item.start_date }}</start_date>
+    <end_date>{{ item.end_date }}</end_date>
+    <valid_since>{{ item.valid_since }}</valid_since>
+    <expiry>{{ item.expiry }}</expiry>
+    <has_child>{{ item.has_child }}</has_child>
+    <lock_quantity>{{ item.lock_quantity }}</lock_quantity>
+    <is_soldout>{{ item.is_soldout }}</is_soldout>
+    <is_deal_on>{{ item.is_deal_on }}</is_deal_on>
+    <deal_on_at>{{ item.deal_on_at }}</deal_on_at>
+    <merchant>
+        <name><![CDATA[{{ item.partner_name|safe }}]]></name>
+        <phone>{{ item.partner_phone }}</phone>
+        <logo>{{ item.partner_log}}</logo>
+        <email>{{ item.partner_email }}</email>
+        <main_address>--</main_address>
+    </merchant>
+    <redemptions>
+    <redemption>
+        <address><![CDATA[{{ item.address|safe }}]]></address>
+        <description><![CDATA[{{ item.description|safe }}]]></description>
+        <longitude>{{ item.longitude }}</longitude>
+        <latitude>{{ item.latitude }}</latitude>
+    </redemption>
+    </redemptions>
+    <city>
+        <id>{{ item.city_id }}</id>
+        <name>{{ item.city_name }}</name>
+        <slug_name>{{ item.city_slug_name }}</slug_name>
+        <timezone>{{ item.city_timezone }}</timezone>
+        <language>{{ item.city_language }}</language>
+    </city>
+    <payment_methods>{{ item.payment_method }}</payment_methods>
+    {% endautoescape %}
+	</offer>
+    {% endfor %}
+</offers>
+</xml>
