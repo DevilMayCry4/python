@@ -57,3 +57,9 @@ class itemModel(models.Model):
               if len(s) > 0:
                   img = img +'<img>'+s+'</img>'+'\n'
           return img
+
+class User(models.Model):
+    username = models.CharField(max_length=50,primary_key=True)
+    password = models.CharField(max_length=50)
+    email = models.EmailField()
+    #img = models.ImageField(upload_to='photo',null=True,blank=True)
