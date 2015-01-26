@@ -62,4 +62,4 @@ class User(models.Model):
     username = models.CharField(max_length=50,primary_key=True)
     password = models.CharField(max_length=50)
     email = models.EmailField()
-    #img = models.ImageField(upload_to='photo',null=True,blank=True)
+    photo = models.ImageField(upload_to='photo',null=True,blank=True)

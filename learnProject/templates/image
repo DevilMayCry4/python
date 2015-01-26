@@ -1,0 +1,4 @@
+<p>
+{% load staticfiles %}
+<img src="{% static "deals/s.png" %}" alt="My image"/>
+</p>

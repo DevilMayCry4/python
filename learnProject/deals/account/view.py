@@ -6,7 +6,9 @@ from django.http import HttpResponse,HttpResponseRedirect
 from django.template import RequestContext
 from  deals.models import User
 from django.views.decorators.csrf import csrf_exempt
+from django.template.loader import get_template
 import json
+
 
 #定义表单模型
 class UserForm(forms.Form):
@@ -17,23 +19,27 @@ class UserForm(forms.Form):
     username = forms.CharField(max_length=100,error_messages=default_errors)
     password = forms.CharField(max_length=100,error_messages=default_errors)
     email = forms.EmailField(max_length=100,error_messages=default_errors)
+    photo = forms.ImageField(error_messages=default_errors)
+
 
 # Create your views here.
 @csrf_exempt
 def register(request):
     message =''
     if request.method == "POST":
-        uf = UserForm(request.POST)
+        uf = UserForm(request.POST, request.FILES)
         if uf.is_valid():
             #获取表单信息
             username = uf.cleaned_data['username']
             password = uf.cleaned_data['password']
             email = uf.cleaned_data['email']
+            photo = uf.cleaned_data['photo'],
             #将表单写入数据库
             user = User()
             user.username = username
             user.password = password
             user.email = email
+            user.photo = photo
             user.save()
             #返回注册成功页面
             return render_to_response('success')
@@ -49,3 +55,8 @@ def register(request):
     else:
         message='请使用post'
     return render_to_response('fail',{'message':message})
+
+def image(request):
+        t = get_template('image')
+        xml = t.render({'item':'s'})
+        return HttpResponse(xml)

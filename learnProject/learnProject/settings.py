@@ -86,3 +86,12 @@ STATIC_URL = '/static/'
 TEMPLATE_DIRS = (
     os.path.join(BASE_DIR,  'templates'),
 )
+
+
+MEDIA_ROOT = os.path.join(BASE_DIR ,'media').replace('\\','/')
+MEDIA_URL = '/media/'
+STATIC_ROOT = os.path.join(BASE_DIR,'static').replace('\\','/')
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+   os.path.join(BASE_DIR,'deals/static/').replace('\\','/')]
