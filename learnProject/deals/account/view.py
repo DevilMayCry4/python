@@ -6,12 +6,17 @@ from django.http import HttpResponse,HttpResponseRedirect
 from django.template import RequestContext
 from  deals.models import User
 from django.views.decorators.csrf import csrf_exempt
+import json
 
 #定义表单模型
 class UserForm(forms.Form):
-    username = forms.CharField(max_length=100)
-    password = forms.CharField(max_length=100)
-    email = forms.CharField(max_length=100)
+    default_errors = {
+    'required': 'This field is required',
+    'invalid': 'Enter a valid value'
+    }
+    username = forms.CharField(max_length=100,error_messages=default_errors)
+    password = forms.CharField(max_length=100,error_messages=default_errors)
+    email = forms.EmailField(max_length=100,error_messages=default_errors)
 
 # Create your views here.
 @csrf_exempt
@@ -33,7 +38,14 @@ def register(request):
             #返回注册成功页面
             return render_to_response('success')
         else:
-            message='资料有误'
+            if uf.errors:
+                messageJson = json.loads(uf.errors.as_json())
+                for filed in uf.errors:
+                    if messageJson[filed] != None:
+                       message = message +filed+':'+ messageJson[filed][0]['message']+'.\n'
+
+            else:
+                message='资料有误'
     else:
         message='请使用post'
     return render_to_response('fail',{'message':message})
