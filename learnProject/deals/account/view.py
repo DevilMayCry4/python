@@ -19,7 +19,7 @@ class UserForm(forms.Form):
     username = forms.CharField(max_length=100,error_messages=default_errors)
     password = forms.CharField(max_length=100,error_messages=default_errors)
     email = forms.EmailField(max_length=100,error_messages=default_errors)
-    photo = forms.ImageField(error_messages=default_errors)
+    photo = forms.ImageField(error_messages=default_errors,required=False)
 
 
 # Create your views here.
@@ -31,15 +31,19 @@ def register(request):
         if uf.is_valid():
             #获取表单信息
             username = uf.cleaned_data['username']
+            olduser = User.objects.filter(username=username)
+            if len(olduser) > 0:
+                 return render_to_response('fail',{'message':'用户已存在'})
             password = uf.cleaned_data['password']
             email = uf.cleaned_data['email']
-            photo = uf.cleaned_data['photo'],
+            photo = uf.cleaned_data['photo']
             #将表单写入数据库
-            user = User()
-            user.username = username
-            user.password = password
-            user.email = email
-            user.photo = photo
+            user = None
+            if photo != None:
+                user = User(username=username,password=password,email=email,photo=photo)
+            else:
+                user = User(username=username,password=password,email=email)
+
             user.save()
             #返回注册成功页面
             return render_to_response('success')
@@ -51,12 +55,7 @@ def register(request):
                        message = message +filed+':'+ messageJson[filed][0]['message']+'.\n'
 
             else:
-                message='资料有误'
+                message='wrong value'
     else:
-        message='请使用post'
+        message='use post'
     return render_to_response('fail',{'message':message})
-
-def image(request):
-        t = get_template('image')
-        xml = t.render({'item':'s'})
-        return HttpResponse(xml)

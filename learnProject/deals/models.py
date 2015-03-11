@@ -1,4 +1,5 @@
 from django.db import models
+import learnProject.settings
 
 # Create your models here.
 class cateoryModel(models.Model):
@@ -62,4 +63,7 @@ class User(models.Model):
     username = models.CharField(max_length=50,primary_key=True)
     password = models.CharField(max_length=50)
     email = models.EmailField()
-    photo = models.ImageField(upload_to='photo',null=True,blank=True)
+    photo = models.ImageField(upload_to='deals/static/photo/%Y%m%d%H%M%S',null=True,blank=True)
+
+    def getPhoto(self):
+        return 'http://121.40.35.178:8000'+str.replace(self.photo.url,'deals','')
