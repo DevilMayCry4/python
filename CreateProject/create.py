@@ -34,12 +34,16 @@ class ProjectFileItem:
         }
         return fileTypes(fileExtentsion)
 
+    def addLibrary(self,library):
+
+
     def addProject(self,projectFile):
 
         fileName = 'project.pbxproj'
         rootId = self.project.objectForKey_('rootObject')
         objects =  self.project.objectForKey_('objects')
         PBXProject = objects.objectForKey_(rootId)
+
         productRefGroupId = PBXProject.objectForKey_('productRefGroup')
 
         ProductGroupId = createId()
@@ -55,7 +59,6 @@ class ProjectFileItem:
         else:
             PBXProject.setValue_forKey_([{'ProductGroup':ProductGroupId,'ProjectRef':ProjectRefId}],'projectReferences')
 
-        print (projectReferencesList)
         fromProject = NSMutableDictionary.dictionaryWithContentsOfFile_(os.path.join(projectFile,fileName))
         fromRootId = fromProject.objectForKey_('rootObject')
         fromObjects =  fromProject.objectForKey_('objects')
@@ -64,11 +67,13 @@ class ProjectFileItem:
         fromPBXGroup = fromObjects.objectForKey_(fromProductRefGroupId)
         children = [createId(),createId()]
         a = 0
-
+        projectProduct = objects.objectForKey_(PBXProject.objectForKey_('targets')[0])
+        dependencies = projectProduct.objectForKey_('dependencies')
         for child in fromPBXGroup.objectForKey_('children'):
             a = a +1
             PBXFileReference = fromObjects.objectForKey_(child)
             referencePath = PBXFileReference.objectForKey_('path')
+
             baseName = os.path.basename(referencePath)
             name = baseName.split('.')[0]
             remoteRefId = createId()
@@ -89,6 +94,10 @@ class ProjectFileItem:
                                         },children[a-1])
 
 
+
+
+
+
         objects.setValue_forKey_({
                                         'isa':'PBXGroup',
                                         'children':children,
@@ -107,6 +116,29 @@ class ProjectFileItem:
 
 
         },ProjectRefId)
+
+        fromProductName = fromObjects.objectForKey_(fromPBXProject.objectForKey_('mainGroup')).objectForKey_('name')
+        dependencyId = createId()
+        if dependencies == None:
+                    projectProduct.setValue_forKey_([dependencyId],'dependencies')
+        else:
+                    dependencies.addObject_(dependencyId)
+        targetProxyId = createId()
+        PBXTargetDependency = {
+                    'isa':'PBXTargetDependency',
+                    'name':fromProductName,
+                    'targetProxy':targetProxyId}
+        objects.setValue_forKey_(PBXTargetDependency,dependencyId)
+
+        PBXContainerItemProxy = {
+                    'isa':'PBXContainerItemProxy',
+                    'containerPortal':ProjectRefId,
+                    'proxyType':'1',
+                    'remoteGlobalIDString':createId(),
+                    'remoteInfo':fromProductName
+        }
+
+        objects.setValue_forKey_(PBXContainerItemProxy,targetProxyId)
 
 
 
@@ -162,9 +194,8 @@ def createId():
 if __name__ == '__main__':
 
     projectItem = ProjectFileItem('/Users/virgil/Desktop/project.pbxproj')
-    projectItem.addProject('/Users/virgil/Documents/python/CreateProject/test1/test1.xcodeproj')
+    projectItem.addProject('/Users/virgil/Desktop/Example/Example/zxing/iphone/ZXingWidget/ZXingWidget.xcodeproj')
     projectItem.save()
-    #addZxing('/Users/virgil/Desktop/project.pbxproj')
     '''
     if len(sys.argv) > 1:
             newProjectName = sys.argv[1]
