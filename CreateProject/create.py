@@ -31,8 +31,7 @@ class ProjectFileItem:
         self.project = NSMutableDictionary.dictionaryWithContentsOfFile_(self.path)
 
 
-
-    def addLibrary(self,library,systemLibrary = False):
+    def addLibrary(self,library,systemLibrary = False,groupName = None):
         rootId = self.project.objectForKey_('rootObject')
         objects =  self.project.objectForKey_('objects')
         PBXProject = objects.objectForKey_(rootId)
@@ -40,17 +39,49 @@ class ProjectFileItem:
         buildPhases = projectProduct.objectForKey_('buildPhases')
 
         FileReferenceId = None
-
-        if systemLibrary:
-           mainGroupId = PBXProject.objectForKey_('mainGroup')
-           mainGroup = objects.objectForKey_(mainGroupId)
-           children = mainGroup.objectForKey_('children')
-           if children == None:
+        mainGroupId = PBXProject.objectForKey_('mainGroup')
+        mainGroup = objects.objectForKey_(mainGroupId)
+        children = mainGroup.objectForKey_('children')
+        if children == None:
                children = []
                mainGroup.setValue_forKey_(children,'children')
+        groupChildren = None
+        if groupName != None:
+            groupId = None
+            for childId in mainGroup.objectForKey_('children'):
+                child = objects.objectForKey_(childId)
+                isa = child.objectForKey_('isa')
+                if isa == 'PBXGroup' and child.objectForKey_('name') == groupName:
+                    groupId = childId
+                    break
+            if groupId == None:
+                groupId = createId()
+                groupChildren = []
+                children.append(groupId)
+                objects.setValue_forKey_(
+                    {
+                        'isa':'PBXGroup',
+                        'children':groupChildren,
+                        'name':groupName,
+                        'sourceTree':'<group>'},groupId)
+            else:
+                group = objects.objectForKey_(groupId)
+                groupChildren = group.objectForKey_('children')
+
+
+        if systemLibrary:
+
            for childId in mainGroup.objectForKey_('children'):
                child = objects.objectForKey_(childId)
-               if child.objectForKey_('lastKnownFileType') == 'wrapper.framework' and child('name') == library:
+               lastKnowFileType = None
+               libraryDir =   None
+               if '.dylib' in library:
+                    lastKnowFileType = 'compiled.mach-o.dylib'
+                    libraryDir =  'usr/lib/'
+               else:
+                   lastKnowFileType = 'wrapper.framework'
+                   libraryDir = 'System/Library/Frameworks/'
+               if child.objectForKey_('lastKnownFileType') == lastKnowFileType  and child.objectForKey_('name') == library:
                    FileReferenceId = childId
                    break
            if FileReferenceId == None:
@@ -58,12 +89,15 @@ class ProjectFileItem:
                objects.setValue_forKey_(
                    {
                        'isa':'PBXFileReference',
-                       'lastKnownFileType':'wrapper.framework',
+                       'lastKnownFileType':lastKnowFileType,
                        'name':library,
-                       'path':os.path.join('System/Library/Frameworks/',library),
+                       'path':os.path.join(libraryDir,library),
                        'sourceTree':'SDKROOT'
                     },FileReferenceId)
-           children.append(FileReferenceId)
+           if groupChildren != None:
+               groupChildren.append(FileReferenceId)
+           else:
+               children.append(FileReferenceId)
 
 
         else:
@@ -233,7 +267,6 @@ def cleanPath(path,newProjectName):
           if os.path.isdir(obj):
               newPath = obj.replace(ProjectName,newProjectName)
               os.rename(obj,newPath)
-              print('newpath %s'%newPath)
               cleanPath(newPath,newProjectName)
           else:
                     if '.DS_Store' in obj:
@@ -267,7 +300,7 @@ if __name__ == '__main__':
 
     projectItem = ProjectFileItem('/Users/virgil/Desktop/project.pbxproj')
     #projectItem.addProject('/Users/virgil/Documents/python/CreateProject/zxing/iphone/ZXingWidget/ZXingWidget.xcodeproj')
-    projectItem.addLibrary('AudioToolbox.framework',True)
+    projectItem.addLibrary('libxml2.dylib',True,'framework')
     projectItem.save()
 
     '''

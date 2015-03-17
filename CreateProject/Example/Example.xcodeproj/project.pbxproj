@@ -66,6 +66,7 @@
 				C52550BC1AA9F26C006D2D18 /* Example */,
 				C52550D61AA9F26C006D2D18 /* ExampleTests */,
 				C52550BB1AA9F26C006D2D18 /* Products */,
+				C59C42C01AB8110E0050C845 /* framework */,
 			);
 			sourceTree = "<group>";
 		};
@@ -117,6 +118,13 @@
 				C52550D81AA9F26C006D2D18 /* Info.plist */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		C59C42C01AB8110E0050C845 /* framework */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = framework;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -414,6 +422,7 @@
 				C52550DF1AA9F26C006D2D18 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		C52550E01AA9F26C006D2D18 /* Build configuration list for PBXNativeTarget "ExampleTests" */ = {
 			isa = XCConfigurationList;
@@ -422,6 +431,7 @@
 				C52550E21AA9F26C006D2D18 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
