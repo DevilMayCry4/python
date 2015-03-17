@@ -30,6 +30,15 @@ class ProjectFileItem:
     def reload(self):
         self.project = NSMutableDictionary.dictionaryWithContentsOfFile_(self.path)
 
+    def getLastKnowFileType(self,extention):
+        types = {
+            'h':'sourcecode.c.h',
+            'm':'sourcecode.c.objc',
+            'dylib':'compiled.mach-o.dylib',
+            'framework':'wrapper.framework',
+            }
+        return types[extention]
+
 
     def addLibrary(self,library,systemLibrary = False,groupName = None):
         rootId = self.project.objectForKey_('rootObject')
@@ -141,6 +150,49 @@ class ProjectFileItem:
                                                  'fileRef':FileReferenceId,
                                              },PBXBuildFileId,)
                           break
+
+    def addDir(self,dir,groupName = None):
+        if os.path.isdir(dir) == False:
+            print('not a dir %s',dir)
+            return
+
+        rootId = self.project.objectForKey_('rootObject')
+        objects =  self.project.objectForKey_('objects')
+        PBXProject = objects.objectForKey_(rootId)
+        mainGroupId = PBXProject.objectForKey_('mainGroup')
+        mainGroup = objects.objectForKey_(mainGroupId)
+        children = mainGroup.objectForKey_('children')
+        projectGroupId = children[0]
+        projectGroup= objects.objectForKey_(projectGroupId)
+        for childId in projectGroup.objectForKey_('children'):
+            child = objects.objectForKey_(childId)
+            if child.objectForKey_('path') == groupName:
+                PBXGroupId = createId()
+                subChildren = child.objectForKey_('children')
+                subChildren.append(PBXGroupId)
+
+                items = []
+                for obj in os.listdir(dir):
+                    if 'DS_Store' in obj:
+                        continue
+                    itemId = createId()
+                    items.append(itemId)
+                    objects.setValue_forKey_({
+                                                 'isa':'PBXFileReference',
+                                                 'fileEncoding':'4',
+                                                 'lastKnownFileType':self.getLastKnowFileType(os.path.basename(obj).split('.')[-1]),
+                                                 'path':os.path.basename(obj),
+                                                 'sourceTree':'<group>'
+                                                 },itemId)
+
+
+                objects.setValue_forKey_({
+                                             'isa':'PBXGroup',
+                                             'children':items,
+                                             'path':os.path.dirname(dir),
+                                             'sourceTree':'<group>'},PBXGroupId)
+
+
 
 
     def addProject(self,projectFile):
@@ -300,7 +352,8 @@ if __name__ == '__main__':
 
     projectItem = ProjectFileItem('/Users/virgil/Desktop/project.pbxproj')
     #projectItem.addProject('/Users/virgil/Documents/python/CreateProject/zxing/iphone/ZXingWidget/ZXingWidget.xcodeproj')
-    projectItem.addLibrary('libxml2.dylib',True,'framework')
+    #projectItem.addLibrary('libxml2.dylib',True,'framework')
+    projectItem.addDir('/Users/virgil/Desktop/MBProgressHUD','Source')
     projectItem.save()
 
     '''
