@@ -151,7 +151,7 @@ class ProjectFileItem:
                                              },PBXBuildFileId,)
                           break
 
-    def addDir(self,dir,groupName = None):
+    def addDir(self,dir,groupName = 'Source'):
         if os.path.isdir(dir) == False:
             print('not a dir %s',dir)
             return
@@ -177,6 +177,7 @@ class ProjectFileItem:
                         continue
                     itemId = createId()
                     items.append(itemId)
+                    print('basename %s'%os.path.basename(obj))
                     objects.setValue_forKey_({
                                                  'isa':'PBXFileReference',
                                                  'fileEncoding':'4',
@@ -189,7 +190,7 @@ class ProjectFileItem:
                 objects.setValue_forKey_({
                                              'isa':'PBXGroup',
                                              'children':items,
-                                             'path':os.path.dirname(dir),
+                                             'path':os.path.basename(dir),
                                              'sourceTree':'<group>'},PBXGroupId)
 
 
