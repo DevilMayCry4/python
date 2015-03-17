@@ -38,8 +38,34 @@ class ProjectFileItem:
         PBXProject = objects.objectForKey_(rootId)
         projectProduct = objects.objectForKey_(PBXProject.objectForKey_('targets')[0])
         buildPhases = projectProduct.objectForKey_('buildPhases')
+
+        FileReferenceId = None
+
         if systemLibrary:
-           print('sys')
+           mainGroupId = PBXProject.objectForKey_('mainGroup')
+           mainGroup = objects.objectForKey_(mainGroupId)
+           children = mainGroup.objectForKey_('children')
+           if children == None:
+               children = []
+               mainGroup.setValue_forKey_(children,'children')
+           for childId in mainGroup.objectForKey_('children'):
+               child = objects.objectForKey_(childId)
+               if child.objectForKey_('lastKnownFileType') == 'wrapper.framework' and child('name') == library:
+                   FileReferenceId = childId
+                   break
+           if FileReferenceId == None:
+               FileReferenceId = createId()
+               objects.setValue_forKey_(
+                   {
+                       'isa':'PBXFileReference',
+                       'lastKnownFileType':'wrapper.framework',
+                       'name':library,
+                       'path':os.path.join('System/Library/Frameworks/',library),
+                       'sourceTree':'SDKROOT'
+                    },FileReferenceId)
+           children.append(FileReferenceId)
+
+
         else:
             keys = objects.allKeys()
             count = keys.count()
@@ -53,16 +79,17 @@ class ProjectFileItem:
                         path = object['path']
                     except:
                         continue
-
                 else:
                     path = object.objectForKey_('path')
 
                 if None == path:
                     continue
-
-
                 if path == library:
-                   for buildPhaseId in buildPhases:
+                    FileReferenceId = key
+                    break
+
+        if FileReferenceId != None:
+           for buildPhaseId in buildPhases:
                        buildPhase = objects.objectForKey_(buildPhaseId)
                        if buildPhase.objectForKey_('isa') == 'PBXFrameworksBuildPhase':
                           PBXBuildFileId = createId()
@@ -77,13 +104,9 @@ class ProjectFileItem:
 
                           objects.setValue_forKey_({
                                                  'isa':'PBXBuildFile',
-                                                 'fileRef':key,
+                                                 'fileRef':FileReferenceId,
                                              },PBXBuildFileId,)
-                          print(buildPhase)
-
                           break
-
-                   break
 
 
     def addProject(self,projectFile):
@@ -244,7 +267,7 @@ if __name__ == '__main__':
 
     projectItem = ProjectFileItem('/Users/virgil/Desktop/project.pbxproj')
     #projectItem.addProject('/Users/virgil/Documents/python/CreateProject/zxing/iphone/ZXingWidget/ZXingWidget.xcodeproj')
-    projectItem.addLibrary('libZXingWidget.a')
+    projectItem.addLibrary('AudioToolbox.framework',True)
     projectItem.save()
 
     '''
