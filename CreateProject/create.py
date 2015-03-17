@@ -5,6 +5,7 @@ import sys
 import string
 import Foundation, objc,AppKit
 import uuid
+import plistlib
 
 #from mod_pbxproj import XcodeProject
 
@@ -24,17 +25,65 @@ class ProjectFileItem:
 
 
     def save(self):
-        return self.project.writeToFile_atomically_(self.path +'tst',True)
+        return self.project.writeToFile_atomically_(self.path,True)
 
-    def getFileType(fileExtentsion):
-        fileTypes = {
-            'app':'wrapper.application',
-            'a':'archive.ar',
-            'octest':'wrapper.cfbundle'
-        }
-        return fileTypes(fileExtentsion)
+    def reload(self):
+        self.project = NSMutableDictionary.dictionaryWithContentsOfFile_(self.path)
 
-    def addLibrary(self,library):
+
+
+    def addLibrary(self,library,systemLibrary = False):
+        rootId = self.project.objectForKey_('rootObject')
+        objects =  self.project.objectForKey_('objects')
+        PBXProject = objects.objectForKey_(rootId)
+        projectProduct = objects.objectForKey_(PBXProject.objectForKey_('targets')[0])
+        buildPhases = projectProduct.objectForKey_('buildPhases')
+        if systemLibrary:
+           print('sys')
+        else:
+            keys = objects.allKeys()
+            count = keys.count()
+
+            for a in range(0,count -1):
+                key = keys[a]
+                object = objects.objectForKey_(key)
+                path = ''
+                if object and isinstance(object,dict):
+                    try:
+                        path = object['path']
+                    except:
+                        continue
+
+                else:
+                    path = object.objectForKey_('path')
+
+                if None == path:
+                    continue
+
+
+                if path == library:
+                   for buildPhaseId in buildPhases:
+                       buildPhase = objects.objectForKey_(buildPhaseId)
+                       if buildPhase.objectForKey_('isa') == 'PBXFrameworksBuildPhase':
+                          PBXBuildFileId = createId()
+
+                          files = buildPhase.objectForKey_('files')
+
+                          if None == files:
+                             buildPhase.setValue_forKey_([PBXBuildFileId],'files')
+                          else:
+                              files.addObject_(PBXBuildFileId)
+                              buildPhase.setValue_forKey_(files,'files')
+
+                          objects.setValue_forKey_({
+                                                 'isa':'PBXBuildFile',
+                                                 'fileRef':key,
+                                             },PBXBuildFileId,)
+                          print(buildPhase)
+
+                          break
+
+                   break
 
 
     def addProject(self,projectFile):
@@ -142,8 +191,6 @@ class ProjectFileItem:
 
 
 
-
-
 def copyDir(src, dst):
     try:
         shutil.copytree(src, dst)
@@ -193,9 +240,13 @@ def createId():
 
 if __name__ == '__main__':
 
+
+
     projectItem = ProjectFileItem('/Users/virgil/Desktop/project.pbxproj')
-    projectItem.addProject('/Users/virgil/Desktop/Example/Example/zxing/iphone/ZXingWidget/ZXingWidget.xcodeproj')
+    #projectItem.addProject('/Users/virgil/Documents/python/CreateProject/zxing/iphone/ZXingWidget/ZXingWidget.xcodeproj')
+    projectItem.addLibrary('libZXingWidget.a')
     projectItem.save()
+
     '''
     if len(sys.argv) > 1:
             newProjectName = sys.argv[1]
