@@ -1,3 +1,4 @@
+#coding=utf-8
 import os
 import shutil
 import errno
@@ -16,12 +17,26 @@ NSArray = objc.lookUpClass('NSArray')
 
 ProjectName = 'Example'
 
+SourceFileExtension = ['c','m','mm']
+ResourceExtension = ['png','jpg','jpeg','js','html','shtml','hml','json']
+FrameWorkExtension = ['a','framewrok','dylib']
+
+class BuildPhaseType:
+     Sources = 'PBXSourcesBuildPhase'
+     Frameworks = 'PBXFrameworksBuildPhase'
+     Resources = 'PBXResourcesBuildPhase'
+
+
 
 class ProjectFileItem:
 
     def __init__(self,path):
         self.path = path
         self.project = NSMutableDictionary.dictionaryWithContentsOfFile_(path)
+        self.rootId = self.project.objectForKey_('rootObject')
+        self.objects =  self.project.objectForKey_('objects')
+        self.PBXProject = self.objects.objectForKey_(self.rootId)
+        self.projectProduct = self.objects.objectForKey_(self.PBXProject.objectForKey_('targets')[0])
 
 
     def save(self):
@@ -30,14 +45,48 @@ class ProjectFileItem:
     def reload(self):
         self.project = NSMutableDictionary.dictionaryWithContentsOfFile_(self.path)
 
-    def getLastKnowFileType(self,extention):
+    def getBuildPhase(self,type):
+        buildPhases = self.projectProduct.objectForKey_('buildPhases')
+        for buildPhaseId in buildPhases:
+            buildPhase = self.objects.objectForKey_(buildPhaseId)
+            if buildPhase.objectForKey_('isa') == type:
+                return buildPhase
+        return None
+
+    def buildPhaseAddFile(self,buildPhaseType,fileReferenceId):
+        if buildPhaseType != None:
+           PBXBuildFileId = createId()
+           buildPhase = self.getBuildPhase(buildPhaseType)
+           files = buildPhase.objectForKey_('files')
+           if None == files:
+              buildPhase.setValue_forKey_([PBXBuildFileId],'files')
+           else:
+               files.addObject_(PBXBuildFileId)
+               buildPhase.setValue_forKey_(files,'files')
+           self.objects.setValue_forKey_({
+                                                 'isa':'PBXBuildFile',
+                                                 'fileRef':fileReferenceId,
+                                             },PBXBuildFileId,)
+           return PBXBuildFileId
+        return None
+
+    def getFileExtention(self,path):
+        return  os.path.basename(path).split('.')[-1]
+
+    def getLastKnowFileType(self,path):
+        extention = self.getFileExtention(path)
+
         types = {
             'h':'sourcecode.c.h',
             'm':'sourcecode.c.objc',
             'dylib':'compiled.mach-o.dylib',
             'framework':'wrapper.framework',
+            'png':'image.png',
             }
-        return types[extention]
+        if extention in types:
+           return types[extention]
+        else:
+            return None
 
 
     def addLibrary(self,library,systemLibrary = False,groupName = None):
@@ -90,9 +139,10 @@ class ProjectFileItem:
                else:
                    lastKnowFileType = 'wrapper.framework'
                    libraryDir = 'System/Library/Frameworks/'
-               if child.objectForKey_('lastKnownFileType') == lastKnowFileType  and child.objectForKey_('name') == library:
-                   FileReferenceId = childId
-                   break
+               if 'lastKnownFileType' in child and 'name' in child:
+                   if child.objectForKey_('lastKnownFileType') == lastKnowFileType  and child.objectForKey_('name') == library:
+                      FileReferenceId = childId
+                      break
            if FileReferenceId == None:
                FileReferenceId = createId()
                objects.setValue_forKey_(
@@ -132,66 +182,112 @@ class ProjectFileItem:
                     break
 
         if FileReferenceId != None:
-           for buildPhaseId in buildPhases:
-                       buildPhase = objects.objectForKey_(buildPhaseId)
-                       if buildPhase.objectForKey_('isa') == 'PBXFrameworksBuildPhase':
-                          PBXBuildFileId = createId()
+           buildPhase = self.getBuildPhase(BuildPhaseType.Frameworks)
+           self.buildPhaseAddFile(buildPhase,FileReferenceId)
 
-                          files = buildPhase.objectForKey_('files')
+          # for buildPhaseId in buildPhases:
+                      # buildPhase = objects.objectForKey_(buildPhaseId)
+                     #  if buildPhase.objectForKey_('isa') == 'PBXFrameworksBuildPhase':
+                         # PBXBuildFileId = createId()
 
-                          if None == files:
-                             buildPhase.setValue_forKey_([PBXBuildFileId],'files')
-                          else:
-                              files.addObject_(PBXBuildFileId)
-                              buildPhase.setValue_forKey_(files,'files')
+                          #files = buildPhase.objectForKey_('files')
 
-                          objects.setValue_forKey_({
-                                                 'isa':'PBXBuildFile',
-                                                 'fileRef':FileReferenceId,
-                                             },PBXBuildFileId,)
-                          break
+                          #if None == files:
+                           #  buildPhase.setValue_forKey_([PBXBuildFileId],'files')
+                         # else:
+                            #  files.addObject_(PBXBuildFileId)
+                          #    buildPhase.setValue_forKey_(files,'files')
 
-    def addDir(self,dir,groupName = 'Source'):
+                          #objects.setValue_forKey_({
+                                             #    'isa':'PBXBuildFile',
+                                           #      'fileRef':FileReferenceId,
+                                            # },PBXBuildFileId,)
+
+
+    def addFile(self,path,Group = None):
+        print('add file %s'%path)
+        if Group == None:
+           print('no group')
+        else:
+            lastKnowFileType = self.getLastKnowFileType(path)
+            if lastKnowFileType == None:
+                return
+            itemId = createId()
+            children = Group.objectForKey_('children')
+            children.append(itemId)
+            extension = self.getFileExtention(path)
+            if extension in SourceFileExtension:
+               self.objects.setValue_forKey_({
+                                         'isa':'PBXFileReference',
+                                         'fileEncoding':'4',
+                                         'lastKnownFileType':lastKnowFileType,
+                                         'path':os.path.basename(path),
+                                         'sourceTree':'<group>'
+                                         },itemId)
+               self.buildPhaseAddFile(BuildPhaseType.Sources,itemId)
+
+            elif extension in ResourceExtension:
+                print('resource %s'%os.path.basename(path))
+                self.objects.setValue_forKey_({
+                    'isa':'PBXFileReference',
+                    'lastKnownFileType':lastKnowFileType,
+                    'path':os.path.basename(path),
+                    'sourceTree':'<group>'
+                    },itemId)
+                self.buildPhaseAddFile(BuildPhaseType.Resources,itemId)
+
+            elif extension in FrameWorkExtension:
+                print('framework')
+            else:
+                 self.objects.setValue_forKey_({
+                                         'isa':'PBXFileReference',
+                                         'fileEncoding':'4',
+                                         'lastKnownFileType':lastKnowFileType,
+                                         'path':os.path.basename(path),
+                                         'sourceTree':'<group>'
+                                         },itemId)
+
+
+
+    def addDir(self,dir,groupName = 'Source',Group = None):
         if os.path.isdir(dir) == False:
             print('not a dir %s',dir)
             return
-
-        rootId = self.project.objectForKey_('rootObject')
-        objects =  self.project.objectForKey_('objects')
-        PBXProject = objects.objectForKey_(rootId)
-        mainGroupId = PBXProject.objectForKey_('mainGroup')
-        mainGroup = objects.objectForKey_(mainGroupId)
-        children = mainGroup.objectForKey_('children')
-        projectGroupId = children[0]
-        projectGroup= objects.objectForKey_(projectGroupId)
-        for childId in projectGroup.objectForKey_('children'):
-            child = objects.objectForKey_(childId)
-            if child.objectForKey_('path') == groupName:
-                PBXGroupId = createId()
-                subChildren = child.objectForKey_('children')
-                subChildren.append(PBXGroupId)
-
-                items = []
-                for obj in os.listdir(dir):
-                    if 'DS_Store' in obj:
-                        continue
-                    itemId = createId()
-                    items.append(itemId)
-                    print('basename %s'%os.path.basename(obj))
-                    objects.setValue_forKey_({
-                                                 'isa':'PBXFileReference',
-                                                 'fileEncoding':'4',
-                                                 'lastKnownFileType':self.getLastKnowFileType(os.path.basename(obj).split('.')[-1]),
-                                                 'path':os.path.basename(obj),
-                                                 'sourceTree':'<group>'
-                                                 },itemId)
+        print('add dir %s'%dir)
+        print(Group)
+        if Group == None:
+           mainGroupId = self.PBXProject.objectForKey_('mainGroup')
+           mainGroup = self.objects.objectForKey_(mainGroupId)
+           children = mainGroup.objectForKey_('children')
+           projectGroupId = children[0]
+           projectGroup= self.objects.objectForKey_(projectGroupId)
+           for childId in projectGroup.objectForKey_('children'):
+               child = self.objects.objectForKey_(childId)
+               if child.objectForKey_('path') == groupName:
+                   Group = child
+                   break
+        if Group == None:
+            return
+        PBXGroupId = createId()
+        subChildren = Group.objectForKey_('children')
+        subChildren.append(PBXGroupId)
+        items = []
+        currentGroup = NSMutableDictionary.dictionary()
+        currentGroup.setValue_forKey_('PBXGroup','isa')
+        currentGroup.setValue_forKey_(items,'children')
+        currentGroup.setValue_forKey_(os.path.basename(dir),'path')
+        currentGroup.setValue_forKey_('<group>','sourceTree')
 
 
-                objects.setValue_forKey_({
-                                             'isa':'PBXGroup',
-                                             'children':items,
-                                             'path':os.path.basename(dir),
-                                             'sourceTree':'<group>'},PBXGroupId)
+        for obj in os.listdir(dir):
+            obj = os.path.join(dir,obj)
+            if 'DS_Store' in obj:
+               continue
+            if os.path.isdir(obj):
+               self.addDir(obj,os.path.basename(dir),Group = currentGroup)
+            else:
+               self.addFile(obj,Group = currentGroup)
+        self.objects.setValue_forKey_(currentGroup,PBXGroupId)
 
 
 
@@ -313,7 +409,7 @@ def walkPath(arg,dirs,files):
     print(dirs)
     print(files)
 
-def cleanPath(path,newProjectName):
+def cleanPath(path,newProjectName,author = 'author'):
       for obj in os.listdir(path):
           obj = os.path.join(path,obj)
           print('---------%s'%obj)
@@ -334,6 +430,7 @@ def cleanPath(path,newProjectName):
                             print ("Could not open file! Please close Excel!")
                         else:
                             s = s.replace(ProjectName,newProjectName)
+                            s = s.replace('virgil',author)
                             f = open(filePath, 'w')
                             f.write(s)
                             f.close()
@@ -349,23 +446,16 @@ def createId():
 
 if __name__ == '__main__':
 
+    configPath = os.path.join(os.getcwd(),'config.plist')
+    config = NSMutableDictionary.dictionaryWithContentsOfFile_(configPath)
+    newProjectName = config.objectForKey_('name')
+    author = config.objectForKey_('author')
 
-
-    projectItem = ProjectFileItem('/Users/virgil/Desktop/project.pbxproj')
-    #projectItem.addProject('/Users/virgil/Documents/python/CreateProject/zxing/iphone/ZXingWidget/ZXingWidget.xcodeproj')
-    #projectItem.addLibrary('libxml2.dylib',True,'framework')
-    projectItem.addDir('/Users/virgil/Desktop/MBProgressHUD','Source')
-    projectItem.save()
-
-    '''
-    if len(sys.argv) > 1:
-            newProjectName = sys.argv[1]
-    else:
-        newProjectName = 'testvv'
     currentPath = os.getcwd()
     projectDir = os.path.join(currentPath,ProjectName)
     if os.path.exists(projectDir) == False:
         print('Project File Not Exist')
+
     else:
         newProjectPath = os.path.join(currentPath,newProjectName)
         try:
@@ -374,6 +464,16 @@ if __name__ == '__main__':
             print (e)
         else:
             cleanPath(newProjectPath,newProjectName)
-    '''
+
+        projectItem = ProjectFileItem('/Users/virgil/Desktop/project.pbxproj')
+        projectConfig = config.objectForKey_('config')
+        if True == projectConfig.objectForKey_('zxing'):
+            zxingPath = os.getcwd() + '/zxing/iphone/ZXingWidget/ZXingWidget.xcodeproj'
+            shutil.copyfileobj()
+            projectItem.addProject(zxingPath)
+        #projectItem.addLibrary('libxml2.dylib',True,'framework')
+        projectItem.addDir('/Users/virgil/Desktop/MBProgressHUD','Source')
+        projectItem.save()
+
 
 
