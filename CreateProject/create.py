@@ -7,6 +7,7 @@ import string
 import Foundation, objc,AppKit
 import uuid
 import plistlib
+import distutils
 
 #from mod_pbxproj import XcodeProject
 
@@ -469,7 +470,7 @@ if __name__ == '__main__':
         projectConfig = config.objectForKey_('config')
         if True == projectConfig.objectForKey_('zxing'):
             zxingPath = os.getcwd() + '/zxing/iphone/ZXingWidget/ZXingWidget.xcodeproj'
-            shutil.copyfileobj()
+            distutils.dir_util.copy_tree()
             projectItem.addProject(zxingPath)
         #projectItem.addLibrary('libxml2.dylib',True,'framework')
         projectItem.addDir('/Users/virgil/Desktop/MBProgressHUD','Source')
