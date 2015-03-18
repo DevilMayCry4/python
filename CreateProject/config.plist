@@ -17,6 +17,8 @@
 		<key>zxing</key>
 		<true/>
 	</dict>
+	<key>path</key>
+	<string>/Users/virgil/Documents</string>
 	<key>author</key>
 	<string>test</string>
 </dict>
