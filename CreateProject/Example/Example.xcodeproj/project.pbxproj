@@ -82,10 +82,10 @@
 		C52550BC1AA9F26C006D2D18 /* Example */ = {
 			isa = PBXGroup;
 			children = (
+				C55146FA1ABB1E5E0038AFC5 /* View */,
+				C55146F91ABB1E570038AFC5 /* Source */,
+				C55146F81ABB1E4F0038AFC5 /* Model */,
 				C59C42D31AB81B010050C845 /* Controller */,
-				C59C42D71AB81B010050C845 /* View */,
-				C59C42D61AB81B010050C845 /* Model */,
-				C59C42D91AB81B290050C845 /* Source */,
 				C52550C11AA9F26C006D2D18 /* AppDelegate.h */,
 				C52550C21AA9F26C006D2D18 /* AppDelegate.m */,
 				C52550C71AA9F26C006D2D18 /* Main.storyboard */,
@@ -122,6 +122,27 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		C55146F81ABB1E4F0038AFC5 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C55146F91ABB1E570038AFC5 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Source;
+			sourceTree = "<group>";
+		};
+		C55146FA1ABB1E5E0038AFC5 /* View */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
 		C59C42C01AB8110E0050C845 /* Framework */ = {
 			isa = PBXGroup;
 			children = (
@@ -136,27 +157,6 @@
 				C59C42D51AB81B010050C845 /* ViewController.m */,
 			);
 			path = Controller;
-			sourceTree = "<group>";
-		};
-		C59C42D61AB81B010050C845 /* Model */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Model;
-			sourceTree = "<group>";
-		};
-		C59C42D71AB81B010050C845 /* View */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = View;
-			sourceTree = "<group>";
-		};
-		C59C42D91AB81B290050C845 /* Source */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Source;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
