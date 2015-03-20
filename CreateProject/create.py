@@ -98,6 +98,8 @@ class ProjectFileItem:
             'png':'image.png',
             'sh':'text.script.sh',
             'a':'archive.ar',
+            'jpeg':'image.jpeg',
+            'jpg':'image.jpeg',
             }
         if extention in types:
            return types[extention]
@@ -502,7 +504,11 @@ def cleanPath(path,newProjectName,author = 'author'):
 def createId():
     return ''.join(str(uuid.uuid4()).upper().split('-')[1:])
 
-
+def raiseException(exception):
+    if sys.version_info[0] < 3:
+       raise OSError(exception)
+    else:
+       raise OSError(exception)
 
 if __name__ == '__main__':
     configPath = os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())),'config.plist')
@@ -510,11 +516,13 @@ if __name__ == '__main__':
     NewProjectName = config.objectForKey_('name')
     author = config.objectForKey_('author')
     path = config.objectForKey_('path')
+    if os.path.exists(path) == False or os.path.isfile(path):
+         raiseException('%s not accept'%path)
 
     currentPath = os.path.dirname(inspect.getfile(inspect.currentframe()))
     projectDir = os.path.join(currentPath,ProjectName)
     if os.path.exists(projectDir) == False:
-        print('Project File Not Exist')
+         raiseException(NewProjectName + '  already exist')
 
     else:
         NewProjectDir = os.path.join(path,NewProjectName)
