@@ -8,6 +8,8 @@ import string
 import Foundation, objc,AppKit
 import uuid
 import plistlib
+import inspect
+
 if sys.version_info[0] < 3:
    print('testvvvv')
    reload(sys)
@@ -424,7 +426,7 @@ class ProjectFileItem:
                                      'isa':'PBXFileReference',
                                      'lastKnownFileType':'wrapper.pb-project',
                                      'name':os.path.basename(projectFile),
-                                     'path':projectFile.replace(os.getcwd()+'/',''),
+                                     'path':projectFile.replace(os.path.dirname(inspect.getfile(inspect.currentframe()))+'/',''),
                                      'sourceTree':'<group>'
 
 
@@ -509,13 +511,14 @@ def createId():
 
 
 if __name__ == '__main__':
-    configPath = os.path.join(os.getcwd(),'config.plist')
+    configPath = os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())),'config.plist') 
+    print(configPath)
     config = NSMutableDictionary.dictionaryWithContentsOfFile_(configPath)
     NewProjectName = config.objectForKey_('name')
     author = config.objectForKey_('author')
     path = config.objectForKey_('path')
 
-    currentPath = os.getcwd()
+    currentPath = os.path.dirname(inspect.getfile(inspect.currentframe()))
     projectDir = os.path.join(currentPath,ProjectName)
     if os.path.exists(projectDir) == False:
         print('Project File Not Exist')
@@ -542,11 +545,12 @@ if __name__ == '__main__':
         else:
             projectItem = ProjectFileItem(projectFilePath)
             projectConfig = config.objectForKey_('config')
-
+            frameworkConfig = config.objectForKey_('frameworkConfig')
+            headrSearchPathConfig = config.objectForKey_('headerSearchPathConfig')
             for  key in projectConfig.allKeys():
                  if key == 'zxing':
                    if True == projectConfig.objectForKey_('zxing'):
-                      zxingDir = os.getcwd()+'/zxing'
+                      zxingDir = os.path.dirname(inspect.getfile(inspect.currentframe()))+'/zxing'
                       newZxingDir = os.path.join(NewProjectDir,'zxing')
                       copyDir(zxingDir,newZxingDir)
                       zxingPath = os.path.join(newZxingDir,'iphone/ZXingWidget/ZXingWidget.xcodeproj')
@@ -554,7 +558,7 @@ if __name__ == '__main__':
                       projectItem.addHeaderSearchPath('"./zxing/iphone/ZXingWidget/Classes/**"')
                       projectItem.addHeaderSearchPath('./zxing/cpp/core/src')
                  else:
-                      dir =os.path.join(os.getcwd(),key)
+                      dir =os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())),key)
                       if  os.path.isdir(dir) and os.path.exists(dir) and True == projectConfig.objectForKey_(key):
                           newDir = os.path.join(NewProjectDir,('%s/Source/%s'%(NewProjectName,key)))
                           copyDir(dir,newDir)
@@ -565,6 +569,16 @@ if __name__ == '__main__':
                              projectItem.addLibrary('libresolv.dylib',True,'Framework')
                              projectItem.addLibrary('libxml2.dylib',True,'Framework')
                              projectItem.addLibrary('Security.framework',True,'Framework')
+
+                 if True == projectConfig.objectForKey_(key):
+                     unitFrameworks = frameworkConfig.objectForKey_(key)
+                     if unitFrameworks != None:
+                        for framework in unitFrameworks:
+                            projectItem.addLibrary(framework,True,'Framework')
+                     unitHeadrSearchPaths = headrSearchPathConfig.objectForKey_(key)
+                     if  unitHeadrSearchPaths != None:
+                         for headerSearchPath in unitHeadrSearchPaths:
+                             projectItem.addHeaderSearchPath(headerSearchPath)
 
 
             projectItem.save()
