@@ -9,6 +9,8 @@ import Foundation, objc,AppKit
 import uuid
 import plistlib
 import inspect
+import time
+import getpass
 
 if sys.version_info[0] < 3:
    reload(sys)
@@ -45,7 +47,6 @@ class ProjectFileItem:
         self.objects =  self.project.objectForKey_('objects')
         self.PBXProject = self.objects.objectForKey_(self.rootId)
         self.projectProduct = self.objects.objectForKey_(self.PBXProject.objectForKey_('targets')[0])
-
 
     def save(self):
         return self.project.writeToFile_atomically_(self.path,True)
@@ -473,8 +474,14 @@ def copyDir(src, dst):
         if exc.errno == errno.ENOTDIR:
             shutil.copy(src, dst)
 
+def today():
+        now = time.localtime(time.time())
+        year = time.strftime('%y',now)
+        month = time.strftime('%m',now)
+        day = time.strftime('%d',now)
+        return year+'-'+month+'-'+day
 
-def cleanPath(path,newProjectName,author = 'author'):
+def cleanPath(path,newProjectName):
       for obj in os.listdir(path):
           obj = os.path.join(path,obj)
           if os.path.isdir(obj):
@@ -492,7 +499,8 @@ def cleanPath(path,newProjectName,author = 'author'):
                             print ("Could not open file! Please close !")
                         else:
                             s = s.replace(ProjectName,newProjectName)
-                            s = s.replace('virgil',author)
+                            s = s.replace('virgil',getpass.getuser())
+                            s = s.replace('6/3/15',today())
                             f = open(filePath, 'w')
                             f.write(s)
                             f.close()
@@ -514,7 +522,6 @@ if __name__ == '__main__':
     configPath = os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())),'config.plist')
     config = NSMutableDictionary.dictionaryWithContentsOfFile_(configPath)
     NewProjectName = config.objectForKey_('name')
-    author = config.objectForKey_('author')
     path = config.objectForKey_('path')
     if os.path.exists(path) == False or os.path.isfile(path):
          raiseException('%s not accept'%path)
@@ -538,7 +545,7 @@ if __name__ == '__main__':
             print (e)
 
         else:
-            cleanPath(NewProjectDir,NewProjectName,author)
+            cleanPath(NewProjectDir,NewProjectName)
 
         projectFilePath = os.path.join(NewProjectDir,'%s.xcodeproj/project.pbxproj'%(NewProjectName))
         if  os.path.exists(projectFilePath) == False:
