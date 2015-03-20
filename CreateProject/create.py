@@ -8,8 +8,11 @@ import string
 import Foundation, objc,AppKit
 import uuid
 import plistlib
-reload(sys)
-sys.setdefaultencoding('utf8')
+if sys.version_info[0] < 3:
+   print('testvvvv')
+   reload(sys)
+   sys.setdefaultencoding('utf8')
+
 #from mod_pbxproj import XcodeProject
 
 NSMutableDictionary = objc.lookUpClass('NSMutableDictionary')
@@ -19,9 +22,10 @@ NSArray = objc.lookUpClass('NSArray')
 
 ProjectName = 'Example'
 NewProjectName  = ''
+NewProjectDir = ''
 
 SourceFileExtension = ['c','m','mm']
-ResourceExtension = ['png','jpg','jpeg','js','html','shtml','hml','json']
+ResourceExtension = ['png','jpg','jpeg','js','html','shtml','hml','json','sh']
 FrameWorkExtension = ['a','framewrok','dylib']
 
 class BuildPhaseType:
@@ -57,7 +61,6 @@ class ProjectFileItem:
         return None
 
     def buildPhaseAddFile(self,buildPhaseType,fileReferenceId):
-        print('add %s %s'%(buildPhaseType,fileReferenceId))
         if buildPhaseType != None:
            PBXBuildFileId = createId()
            buildPhase = self.getBuildPhase(buildPhaseType)
@@ -92,12 +95,41 @@ class ProjectFileItem:
             'dylib':'compiled.mach-o.dylib',
             'framework':'wrapper.framework',
             'png':'image.png',
+            'sh':'text.script.sh',
+            'a':'archive.ar',
             }
         if extention in types:
            return types[extention]
         else:
             return None
 
+    def getBuildSetting(self,Debug = True):
+        buildConfigurationListId = self.projectProduct.objectForKey_('buildConfigurationList')
+        buildConfigurationList = self.objects.objectForKey_(buildConfigurationListId)
+        buildConfigurations = buildConfigurationList.objectForKey_('buildConfigurations')
+        for buildConfigurationId in buildConfigurations:
+            buildConfiguration = self.objects.objectForKey_(buildConfigurationId)
+            if buildConfiguration.objectForKey_('name') == 'Debug' and Debug:
+                return buildConfiguration
+            if buildConfiguration.objectForKey_('name') == 'Release' and Debug == False:
+               return buildConfiguration
+        return None
+
+    def addHeaderSearchPath(self,path):
+        if path != None:
+             buildConfigurationListId = self.projectProduct.objectForKey_('buildConfigurationList')
+             buildConfigurationList = self.objects.objectForKey_(buildConfigurationListId)
+             buildConfigurations = buildConfigurationList.objectForKey_('buildConfigurations')
+             for buildConfigurationId in buildConfigurations:
+                buildConfiguration = self.objects.objectForKey_(buildConfigurationId)
+                buildSettings = buildConfiguration.objectForKey_('buildSettings')
+                headers = buildSettings.objectForKey_('HEADER_SEARCH_PATHS')
+                if headers == None:
+                    headers = NSMutableArray.array()
+                    headers.addObject_('"$(inherited)"')
+                    headers.addObject_('/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include')
+                    buildSettings.setValue_forKey_(headers,'HEADER_SEARCH_PATHS')
+                headers.addObject_(path)
 
     def addLibrary(self,library,systemLibrary = False,groupName = None):
         rootId = self.project.objectForKey_('rootObject')
@@ -149,7 +181,6 @@ class ProjectFileItem:
                if child.objectForKey_('lastKnownFileType') == lastKnowFileType  and child.objectForKey_('name') == library:
                       FileReferenceId = childId
                       break
-               print(child)
 
            if FileReferenceId == None:
                FileReferenceId = createId()
@@ -195,10 +226,26 @@ class ProjectFileItem:
         if FileReferenceId != None:
            self.buildPhaseAddFile(BuildPhaseType.Frameworks,FileReferenceId)
 
+    def addLibrarySearchPath(self,path):
+        if path != None:
+             buildConfigurationListId = self.projectProduct.objectForKey_('buildConfigurationList')
+             buildConfigurationList = self.objects.objectForKey_(buildConfigurationListId)
+             buildConfigurations = buildConfigurationList.objectForKey_('buildConfigurations')
+             for buildConfigurationId in buildConfigurations:
+                buildConfiguration = self.objects.objectForKey_(buildConfigurationId)
+                buildSettings = buildConfiguration.objectForKey_('buildSettings')
+                paths = buildSettings.objectForKey_('LIBRARY_SEARCH_PATHS')
+                if paths == None:
+                    paths = NSMutableArray.array()
+                    paths.addObject_('"$(inherited)",')
+                    buildSettings.setValue_forKey_(paths,'LIBRARY_SEARCH_PATHS')
+                tmpPath = path.replace(NewProjectDir,'')
+                tmpPath = os.path.dirname(tmpPath)
+                paths.addObject_('$(PROJECT_DIR)'+tmpPath)
+                print(paths)
 
 
     def addFile(self,path,Group = None):
-        print('add file %s'%path)
         if Group == None:
            print('no group')
         else:
@@ -227,6 +274,7 @@ class ProjectFileItem:
                     'sourceTree':'<group>'
                     }),itemId)
                 self.buildPhaseAddFile(BuildPhaseType.Resources,itemId)
+                self.addHeaderSearchPath(path)
 
             elif extension in FrameWorkExtension:
                  self.objects.setValue_forKey_(createDict({
@@ -235,6 +283,8 @@ class ProjectFileItem:
                                          'path':os.path.basename(path),
                                          'sourceTree':'<group>'
                                          }),itemId)
+                 self.buildPhaseAddFile(BuildPhaseType.Frameworks,itemId)
+                 self.addLibrarySearchPath(path)
 
             else:
                  self.objects.setValue_forKey_(createDict({
@@ -253,9 +303,7 @@ class ProjectFileItem:
             return
         if Group == None:
            mainGroupId = self.PBXProject.objectForKey_('mainGroup')
-           print(mainGroupId)
            mainGroup = self.objects.objectForKey_(mainGroupId)
-           print(mainGroup)
            children = mainGroup.objectForKey_('children')
            projectGroupId = None
            for groupId  in children:
@@ -266,7 +314,6 @@ class ProjectFileItem:
            if projectGroupId == None:
                return
            projectGroup = self.objects.objectForKey_(projectGroupId)
-           print(projectGroup)
            for childId in projectGroup.objectForKey_('children'):
                child = self.objects.objectForKey_(childId)
                if child.objectForKey_('path') == groupName:
@@ -474,19 +521,22 @@ if __name__ == '__main__':
         print('Project File Not Exist')
 
     else:
-        newProjectPath = os.path.join(path,NewProjectName)
-        if os.path.exists(newProjectPath):
-            raise OSError,(NewProjectName + '  already exist')
+        NewProjectDir = os.path.join(path,NewProjectName)
+        if os.path.exists(NewProjectDir):
+            if sys.version_info[0] < 3:
+               raise OSError (NewProjectName + '  already exist')
+            else:
+                raise OSError(NewProjectName + '  already exist')
         try:
-            copyDir(projectDir,newProjectPath)
+            copyDir(projectDir,NewProjectDir)
 
         except e:
             print (e)
 
         else:
-            cleanPath(newProjectPath,NewProjectName,author)
+            cleanPath(NewProjectDir,NewProjectName,author)
 
-        projectFilePath = os.path.join(newProjectPath,'%s.xcodeproj/project.pbxproj'%(NewProjectName))
+        projectFilePath = os.path.join(NewProjectDir,'%s.xcodeproj/project.pbxproj'%(NewProjectName))
         if  os.path.exists(projectFilePath) == False:
             print ('project file not exist')
         else:
@@ -497,15 +547,25 @@ if __name__ == '__main__':
                  if key == 'zxing':
                    if True == projectConfig.objectForKey_('zxing'):
                       zxingDir = os.getcwd()+'/zxing'
-                      newZxingDir = os.path.join(newProjectPath,'zxing')
+                      newZxingDir = os.path.join(NewProjectDir,'zxing')
                       copyDir(zxingDir,newZxingDir)
                       zxingPath = os.path.join(newZxingDir,'iphone/ZXingWidget/ZXingWidget.xcodeproj')
                       projectItem.addProject(zxingPath)
+                      projectItem.addHeaderSearchPath('"./zxing/iphone/ZXingWidget/Classes/**"')
+                      projectItem.addHeaderSearchPath('./zxing/cpp/core/src')
                  else:
                       dir =os.path.join(os.getcwd(),key)
                       if  os.path.isdir(dir) and os.path.exists(dir) and True == projectConfig.objectForKey_(key):
-                          newDir = os.path.join(newProjectPath,('%s/Source/%s'%(NewProjectName,key)))
+                          newDir = os.path.join(NewProjectDir,('%s/Source/%s'%(NewProjectName,key)))
                           copyDir(dir,newDir)
                           projectItem.addDir(newDir)
+
+                          if key == 'XMPPFramework':
+                             projectItem.addHeaderSearchPath("/usr/include/libxml2")
+                             projectItem.addLibrary('libresolv.dylib',True,'Framework')
+                             projectItem.addLibrary('libxml2.dylib',True,'Framework')
+                             projectItem.addLibrary('Security.framework',True,'Framework')
+
+
             projectItem.save()
 

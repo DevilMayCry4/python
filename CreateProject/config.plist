@@ -6,6 +6,10 @@
 	<string>ProjectName</string>
 	<key>config</key>
 	<dict>
+		<key>XMPPFramework</key>
+		<true/>
+		<key>SWRevealViewController</key>
+		<true/>
 		<key>GBDeviceInfo</key>
 		<true/>
 		<key>Reachability</key>
@@ -15,7 +19,7 @@
 		<key>MBProgressHUD</key>
 		<true/>
 		<key>zxing</key>
-		<true/>
+		<false/>
 	</dict>
 	<key>path</key>
 	<string>/Users/virgil/Documents</string>
