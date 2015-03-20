@@ -77,7 +77,7 @@ class ProjectFileItem:
            else:
                files.addObject_(PBXBuildFileId)
                buildPhase.setValue_forKey_(files,'files')
-               self.objects.setValue_forKey_(createDict({
+           self.objects.setValue_forKey_(createDict({
                                                  'isa':'PBXBuildFile',
                                                  'fileRef':fileReferenceId,
                                              }),PBXBuildFileId,)
@@ -358,7 +358,7 @@ class ProjectFileItem:
         mainGroupId = PBXProject.objectForKey_('mainGroup')
         PBXGroup = objects.objectForKey_(mainGroupId)
         children = PBXGroup.objectForKey_('children')
-        children.insertObject_atIndex_(ProjectRefId,0)
+        children.addObject_(ProjectRefId)
 
         projectReferencesList = PBXProject.objectForKey_('projectReferences')
         if None != projectReferencesList:
@@ -372,6 +372,16 @@ class ProjectFileItem:
         fromPBXProject = fromObjects.objectForKey_(fromRootId)
         fromProductRefGroupId = fromPBXProject.objectForKey_('productRefGroup')
         fromPBXGroup = fromObjects.objectForKey_(fromProductRefGroupId)
+
+        name = ''
+
+        for targetId in fromPBXProject.objectForKey_('targets'):
+
+            tmpObject = fromObjects.objectForKey_(targetId)
+            if tmpObject.objectForKey_('productType') == 'com.apple.product-type.library.static':
+                name = tmpObject.objectForKey_('name')
+                break
+
         children = NSMutableArray.array()
         children.addObject_(createId())
         children.addObject_(createId())
@@ -382,17 +392,13 @@ class ProjectFileItem:
             a = a +1
             PBXFileReference = fromObjects.objectForKey_(child)
             referencePath = PBXFileReference.objectForKey_('path')
-
-            baseName = os.path.basename(referencePath)
-
-            name = baseName.split('.')[0]
             remoteRefId = createId()
             objects.setValue_forKey_(createDict({
                                          'isa':'PBXContainerItemProxy',
                                          'containerPortal':ProjectRefId,
                                          'proxyType':'2',
                                          'remoteGlobalIDString':createId(),
-                                         'remoteInfo':name,
+                                         'remoteInfo':'ZXingWidget',
             }),remoteRefId)
 
             objects.setValue_forKey_(createDict({
@@ -402,6 +408,8 @@ class ProjectFileItem:
                                             'remoteRef':remoteRefId,
                                             'sourceTree':PBXFileReference.objectForKey_('sourceTree')
                                         }),children.objectAtIndex_(a-1))
+            if self.getFileExtention(referencePath) in FrameWorkExtension:
+                self.buildPhaseAddFile(BuildPhaseType.Frameworks,children.objectAtIndex_(a-1))
 
         objects.setValue_forKey_(createDict({
                                         'isa':'PBXGroup',
