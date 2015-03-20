@@ -11,7 +11,6 @@ import plistlib
 import inspect
 
 if sys.version_info[0] < 3:
-   print('testvvvv')
    reload(sys)
    sys.setdefaultencoding('utf8')
 
@@ -244,7 +243,6 @@ class ProjectFileItem:
                 tmpPath = path.replace(NewProjectDir,'')
                 tmpPath = os.path.dirname(tmpPath)
                 paths.addObject_('$(PROJECT_DIR)'+tmpPath)
-                print(paths)
 
 
     def addFile(self,path,Group = None):
@@ -301,7 +299,6 @@ class ProjectFileItem:
 
     def addDir(self,dir,groupName = 'Source',Group = None):
         if os.path.isdir(dir) == False:
-            print('not a dir %s',dir)
             return
         if Group == None:
            mainGroupId = self.PBXProject.objectForKey_('mainGroup')
@@ -405,13 +402,6 @@ class ProjectFileItem:
                                             'remoteRef':remoteRefId,
                                             'sourceTree':PBXFileReference.objectForKey_('sourceTree')
                                         }),children.objectAtIndex_(a-1))
-            if self.getFileExtention(baseName) in FrameWorkExtension:
-                self.buildPhaseAddFile(BuildPhaseType.Frameworks,children.objectAtIndex_(a-1))
-
-
-
-
-
 
         objects.setValue_forKey_(createDict({
                                         'isa':'PBXGroup',
@@ -472,11 +462,7 @@ def copyDir(src, dst):
     except OSError as exc: # python >2.5
         if exc.errno == errno.ENOTDIR:
             shutil.copy(src, dst)
-       # else:
-            #raise OSError,("can't copy ,errno %d"%exc.errno)
-def walkPath(arg,dirs,files):
-    print(dirs)
-    print(files)
+
 
 def cleanPath(path,newProjectName,author = 'author'):
       for obj in os.listdir(path):
@@ -511,8 +497,7 @@ def createId():
 
 
 if __name__ == '__main__':
-    configPath = os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())),'config.plist') 
-    print(configPath)
+    configPath = os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())),'config.plist')
     config = NSMutableDictionary.dictionaryWithContentsOfFile_(configPath)
     NewProjectName = config.objectForKey_('name')
     author = config.objectForKey_('author')
@@ -548,27 +533,20 @@ if __name__ == '__main__':
             frameworkConfig = config.objectForKey_('frameworkConfig')
             headrSearchPathConfig = config.objectForKey_('headerSearchPathConfig')
             for  key in projectConfig.allKeys():
+
                  if key == 'zxing':
-                   if True == projectConfig.objectForKey_('zxing'):
+                   if True == projectConfig.objectForKey_(key):
                       zxingDir = os.path.dirname(inspect.getfile(inspect.currentframe()))+'/zxing'
                       newZxingDir = os.path.join(NewProjectDir,'zxing')
                       copyDir(zxingDir,newZxingDir)
                       zxingPath = os.path.join(newZxingDir,'iphone/ZXingWidget/ZXingWidget.xcodeproj')
                       projectItem.addProject(zxingPath)
-                      projectItem.addHeaderSearchPath('"./zxing/iphone/ZXingWidget/Classes/**"')
-                      projectItem.addHeaderSearchPath('./zxing/cpp/core/src')
                  else:
                       dir =os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())),key)
                       if  os.path.isdir(dir) and os.path.exists(dir) and True == projectConfig.objectForKey_(key):
                           newDir = os.path.join(NewProjectDir,('%s/Source/%s'%(NewProjectName,key)))
                           copyDir(dir,newDir)
                           projectItem.addDir(newDir)
-
-                          if key == 'XMPPFramework':
-                             projectItem.addHeaderSearchPath("/usr/include/libxml2")
-                             projectItem.addLibrary('libresolv.dylib',True,'Framework')
-                             projectItem.addLibrary('libxml2.dylib',True,'Framework')
-                             projectItem.addLibrary('Security.framework',True,'Framework')
 
                  if True == projectConfig.objectForKey_(key):
                      unitFrameworks = frameworkConfig.objectForKey_(key)
@@ -582,4 +560,5 @@ if __name__ == '__main__':
 
 
             projectItem.save()
+            print('Finish')
 

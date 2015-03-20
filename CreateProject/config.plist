@@ -7,19 +7,50 @@
 	<key>config</key>
 	<dict>
 		<key>XMPPFramework</key>
-		<true/>
-		<key>SWRevealViewController</key>
-		<true/>
-		<key>GBDeviceInfo</key>
-		<true/>
-		<key>Reachability</key>
-		<true/>
-		<key>AFNetworking</key>
-		<true/>
-		<key>MBProgressHUD</key>
-		<true/>
-		<key>zxing</key>
 		<false/>
+		<key>SWRevealViewController</key>
+		<false/>
+		<key>GBDeviceInfo</key>
+		<false/>
+		<key>Reachability</key>
+		<false/>
+		<key>AFNetworking</key>
+		<false/>
+		<key>MBProgressHUD</key>
+		<false/>
+		<key>zxing</key>
+		<true/>
+	</dict>
+	<key>frameworkConfig</key>
+	<dict>
+		<key>zxing</key>
+		<array>
+			<string>AddressBookUI.framework</string>
+			<string>AddressBook.framework</string>
+			<string>libiconv.dylib</string>
+			<string>CoreMedia.framework</string>
+			<string>CoreVideo.framework</string>
+			<string>AudioToolbox.framework</string>
+			<string>AVFoundation.framework</string>
+		</array>
+		<key>XMPPFramework</key>
+		<array>
+			<string>libresolv.dylib</string>
+			<string>libxml2.dylib</string>
+			<string>Security.framework</string>
+		</array>
+	</dict>
+	<key>headerSearchPathConfig</key>
+	<dict>
+		<key>zxing</key>
+		<array>
+			<string>./zxing/iphone/ZXingWidget/Classes/**</string>
+			<string>./zxing/cpp/core/src</string>
+		</array>
+		<key>XMPPFramework</key>
+		<array>
+			<string>/usr/include/libxml2</string>
+		</array>
 	</dict>
 	<key>path</key>
 	<string>/Users/virgil/Documents</string>
