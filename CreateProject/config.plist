@@ -2,10 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.llsh.ios.mshare</string>
 	<key>name</key>
-	<string>ProjectName</string>
+	<string>LLSH</string>
 	<key>config</key>
 	<dict>
+		<key>DelayImageView</key>
+		<true/>
+		<key>PredictScrollView</key>
+		<true/>
+		<key>PullController</key>
+		<true/>
+		<key>WEPoppover</key>
+		<true/>
+		<key>Util</key>
+		<true/>
 		<key>XMPPFramework</key>
 		<false/>
 		<key>SWRevealViewController</key>
@@ -15,14 +27,19 @@
 		<key>Reachability</key>
 		<false/>
 		<key>AFNetworking</key>
-		<false/>
-		<key>MBProgressHUD</key>
-		<false/>
-		<key>zxing</key>
 		<true/>
+		<key>MBProgressHUD</key>
+		<true/>
+		<key>zxing</key>
+		<false/>
 	</dict>
 	<key>frameworkConfig</key>
 	<dict>
+		<key>Util</key>
+		<array>
+			<string>CFNetwork.framework</string>
+			<string>SystemConfiguration.framework</string>
+		</array>
 		<key>zxing</key>
 		<array>
 			<string>AddressBookUI.framework</string>

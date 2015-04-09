@@ -101,6 +101,7 @@ class ProjectFileItem:
             'a':'archive.ar',
             'jpeg':'image.jpeg',
             'jpg':'image.jpeg',
+            'mm':'sourcecode.cpp.objcpp',
             }
         if extention in types:
            return types[extention]
@@ -277,7 +278,6 @@ class ProjectFileItem:
                     'sourceTree':'<group>'
                     }),itemId)
                 self.buildPhaseAddFile(BuildPhaseType.Resources,itemId)
-                self.addHeaderSearchPath(path)
 
             elif extension in FrameWorkExtension:
                  self.objects.setValue_forKey_(createDict({
@@ -553,12 +553,21 @@ if __name__ == '__main__':
         else:
             projectItem = ProjectFileItem(projectFilePath)
             projectConfig = config.objectForKey_('config')
+            bundleId = config.objectForKey_('CFBundleIdentifier')
             frameworkConfig = config.objectForKey_('frameworkConfig')
             headrSearchPathConfig = config.objectForKey_('headerSearchPathConfig')
-            for  key in projectConfig.allKeys():
 
+            infoPlistPath = os.path.join(NewProjectDir,('%s/Info.plist'%NewProjectName))
+            print(infoPlistPath)
+            if bundleId != None and os.path.exists(infoPlistPath):
+               info = NSMutableDictionary.dictionaryWithContentsOfFile_(infoPlistPath)
+               info.setValue_forKey_(bundleId,'CFBundleIdentifier')
+               info.writeToFile_atomically_(infoPlistPath,True)
+            for  key in projectConfig.allKeys():
                  if key == 'zxing':
                    if True == projectConfig.objectForKey_(key):
+                      print('----------------------')
+                      print('add   '+key)
                       zxingDir = os.path.dirname(inspect.getfile(inspect.currentframe()))+'/zxing'
                       newZxingDir = os.path.join(NewProjectDir,'zxing')
                       copyDir(zxingDir,newZxingDir)
@@ -567,6 +576,8 @@ if __name__ == '__main__':
                  else:
                       dir =os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())),key)
                       if  os.path.isdir(dir) and os.path.exists(dir) and True == projectConfig.objectForKey_(key):
+                          print('----------------------')
+                          print('add  ' + key)
                           newDir = os.path.join(NewProjectDir,('%s/Source/%s'%(NewProjectName,key)))
                           copyDir(dir,newDir)
                           projectItem.addDir(newDir)
