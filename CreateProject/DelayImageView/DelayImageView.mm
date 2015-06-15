@@ -204,7 +204,7 @@ static NSOperationQueue *_queue;
                 }
                 if (request.responseData)
                 {
-                    [request.responseData writeToFile:NSUtil::CacheUrlPath(url) atomically:YES];
+                    [request.responseData writeToFile:path atomically:YES];
                 }
             } failure:^(AFHTTPRequestOperation *operation, NSError *error){
                  [weak downloaded:nil];

@@ -1,13 +1,13 @@
 //
 //  AppDelegate.m
-//  Example
+//  test
 //
-//  Created by virgil on 6/3/15.
-//  Copyright (c) 2015年 xtownmobile.com. All rights reserved.
+//  Created by virgil on 15-5-25.
+//  Copyright (c) 2015年 xtownmobile. All rights reserved.
 //
 
 #import "AppDelegate.h"
-
+#import "Base64Coder.h"
 @interface AppDelegate ()
 
 @end
@@ -15,7 +15,9 @@
 @implementation AppDelegate
 
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions { 
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    NSString *s = @"eyJpZCI6MjQ0LCJ2ZXJzaW9uIjoiMS4wIiwiYm9va191bml0IjpbeyJib29rX3ZvbHVtZSI6IjTkuIsgQiIsImJvb2tfdW5pdF9uYW1lIjoi56ys5LiA5Y2V5YWDIiwiYm9va19pbmRleHMiOlt7ImJvb2tfaW5kZXhpZCI6OCwibmFtZSI6IuesrDEx6K++IiwicGFnZXMiOlt7ImlkIjo1LCJyYW5rIjoxLCJwYWdlX251bWJlciI6Inc4MyIsInVybCI6Im1hdGgvMTAwNDA2In0seyJpZCI6NCwicmFuayI6MiwicGFnZV9udW1iZXIiOiJ3ODIiLCJ1cmwiOiJtYXRoLzEwMDQwNSJ9LHsiaWQiOjYsInJhbmsiOjMsInBhZ2VfbnVtYmVyIjoidzg0IiwidXJsIjoibWF0aC8xMzQ0MDAzODAifSx7InJhbmsiOjR9LHsicmFuayI6NX0seyJyYW5rIjo2fSx7InJhbmsiOjd9LHsicmFuayI6OH0seyJyYW5rIjo5fSx7InJhbmsiOjEwfV19XX1dLCJhcGkiOltdfQ00";
+     NSString *sss = [Base64Coder decodeString:s withEncodingOrZero:NSASCIIStringEncoding];
     // Override point for customization after application launch.
     return YES;
 }

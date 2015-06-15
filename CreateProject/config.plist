@@ -5,7 +5,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.llsh.ios.mshare</string>
 	<key>name</key>
-	<string>LLSH</string>
+	<string>LLSHte</string>
 	<key>config</key>
 	<dict>
 		<key>DelayImageView</key>

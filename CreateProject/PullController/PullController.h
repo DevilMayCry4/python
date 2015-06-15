@@ -7,10 +7,17 @@
 //
 
 #import <UIKit/UIKit.h> 
+
 @class EGORefreshTableFooterView;
 @class EGORefreshTableHeaderView;
-@class LoadingFooter;
 @protocol EGORefreshTableDelegate;
+
+@interface LoadingFooter : UIView
+
+@property(nonatomic,readonly)UIActivityIndicatorView *indicator;
+@property(nonatomic,readonly)UILabel *infoLabel;
+
+@end
 
 @interface PullController : UIViewController<EGORefreshTableDelegate, UITableViewDelegate, UITableViewDataSource>
 {

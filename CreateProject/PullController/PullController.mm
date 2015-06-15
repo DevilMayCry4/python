@@ -11,16 +11,10 @@
 #import "PullController.h"
 #import "EGORefreshTableHeaderView.h"
 #import "EGORefreshTableFooterView.h"
- 
+
 #define Load_Height 20
 #define OFF 5.0
-#define LoadingMoreString @"正在加載更多"
-@interface LoadingFooter : UIView
-
-@property(nonatomic,readonly)UIActivityIndicatorView *indicator;
-@property(nonatomic,readonly)UILabel *infoLabel;
-
-@end
+#define LoadingMoreString @"正在加载更多"
 
 @implementation LoadingFooter
 
@@ -30,22 +24,25 @@
     if(self)
     {
         self.backgroundColor =  [UIColor clearColor];
-      
+        
         _indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
         [self addSubview:_indicator];
-        CGSize size = [LoadingMoreString sizeWithFont:[UIFont systemFontOfSize:16] constrainedToSize:CGSizeMake(CGRectGetWidth(frame), 100)];
+        CGSize size = [LoadingMoreString boundingRectWithSize:CGSizeMake(CGRectGetWidth(frame), 100) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:16]} context:nil].size;
         CGRect tmp = _indicator.frame;
-        tmp.origin.x = CGRectGetWidth(frame)/2 -  tmp.size.width/2 + size.width/2 + OFF ;
+        tmp.origin.x =( CGRectGetWidth(frame) -  tmp.size.width - size.width - OFF)/2 ;
         tmp.origin.y = 10;
         _indicator.frame = tmp;
         _indicator.hidesWhenStopped = YES;
-        _infoLabel = [[UILabel alloc] initWithFrame:CGRectMake(CGRectGetMinX(_indicator.frame)- CGRectGetWidth(frame)/2 - OFF, 10, CGRectGetWidth(frame)/2, 20)];
+        [_indicator startAnimating];
+        
+        _infoLabel = [[UILabel alloc] initWithFrame:CGRectMake(CGRectGetMaxX(_indicator.frame) + OFF, 10, CGRectGetWidth(frame)/2, 20)];
         _infoLabel.text = LoadingMoreString;
-        _infoLabel.textAlignment = NSTextAlignmentCenter;
         _infoLabel.backgroundColor = [UIColor clearColor];
         _infoLabel.textColor = [UIColor grayColor];
         _infoLabel.font = [UIFont systemFontOfSize:16];
         [self addSubview:_infoLabel];
+        
+        
     }
     return self;
 }
@@ -57,14 +54,14 @@
 
 @end
 
-@implementation PullController 
+@implementation PullController
 
 - (id)init
 {
     self = [super init];
     if (self)
     {
-         _refreshIfViewAppear = YES;
+        _refreshIfViewAppear = YES;
     }
     return self;
 }
@@ -82,7 +79,6 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
     if (_scroll)
     {
         _tableView = (id)[[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), CGRectGetHeight(self.view.frame) )];
@@ -92,15 +88,26 @@
     {
         _tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), CGRectGetHeight(self.view.frame) )];
         _tableView.dataSource = self;
-        _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     }
-  
+    
     _tableView.delegate  = self;
     _tableView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     [self.view addSubview:_tableView];
     
     [self createHeaderView];
+    [_tableView addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew context:NULL];
     
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if (object == _tableView && [keyPath isEqualToString: @"frame"])
+    {
+        if (_more)
+        {
+            [self setFooterView];
+        }
+    }
 }
 
 //页面重新出现的时候、判断是否需要刷新
@@ -145,13 +152,13 @@
     {
         [_refreshHeaderView removeFromSuperview];
     }
-
+    
     _refreshHeaderView = [[EGORefreshTableHeaderView alloc] initWithFrame:
-        CGRectMake(0.0f, 0.0f - self.view.bounds.size.height,
-        self.view.frame.size.width, self.view.bounds.size.height)];
+                          CGRectMake(0.0f, 0.0f - self.view.bounds.size.height,
+                                     self.view.frame.size.width, self.view.bounds.size.height)];
     _refreshHeaderView.delegate = self;
-
-
+    
+    
     [_tableView addSubview:_refreshHeaderView];
     [_refreshHeaderView refreshLastUpdatedDate];
 }
@@ -162,7 +169,7 @@
     {
         [_refreshHeaderView removeFromSuperview];
     }
-
+    
     _refreshHeaderView = nil;
 }
 
@@ -170,23 +177,23 @@
 - (void)setFooterView
 {
     CGFloat height = MAX(_tableView.contentSize.height, _tableView.frame.size.height);
-
+    
     if (_refreshFooterView && [_refreshFooterView superview])
     {
         // reset position
         _refreshFooterView.frame = CGRectMake(0.0f,height,
-                _tableView.frame.size.width,
-                self.view.bounds.size.height);
+                                              _tableView.frame.size.width,
+                                              self.view.bounds.size.height);
     }
     else
     {
         _refreshFooterView = [[LoadingFooter alloc] initWithFrame:
-            CGRectMake(0.0f, height,
-            _tableView.frame.size.width, self.view.bounds.size.height)];
-    
+                              CGRectMake(0.0f, height,
+                                         _tableView.frame.size.width, self.view.bounds.size.height)];
+        
         [_tableView addSubview:_refreshFooterView];
     }
- 
+    
 }
 
 //当没有更多的数据的时候、去掉列表底部的加载更多
@@ -196,7 +203,7 @@
     {
         [_refreshFooterView removeFromSuperview];
     }
-
+    
     _refreshFooterView = nil;
 }
 #pragma mark-
@@ -204,12 +211,13 @@
 //手动调用下拉刷新
 -(void)showRefreshHeader:(BOOL)animated
 {
-	if (!_reloading)
-    { 
+    if (!_reloading)
+    {
+        _tableView.contentSize = CGSizeZero;
         [UIView animateWithDuration:0.3 animations:^{
-             _tableView.contentInset = UIEdgeInsetsMake(65, 0.0f, 0.0f, 0.0f);
-             [_tableView scrollRectToVisible:CGRectMake(0, 0.0f, 1, 1) animated:NO];
-           
+            _tableView.contentInset = UIEdgeInsetsMake(65, 0.0f, 0.0f, 0.0f);
+            [_tableView scrollRectToVisible:CGRectMake(0, 0.0f, 1, 1) animated:NO];
+            
         } completion:^(BOOL finish){
             [_refreshHeaderView egoRefreshScrollViewDidEndDragging:_tableView];
         }];
@@ -224,11 +232,11 @@
     {
         [_refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
     }
-
+    
     if ( (scrollView.contentOffset.y+scrollView.frame.size.height) > scrollView.contentSize.height+Load_Height &&
         scrollView.contentOffset.y > 0.0f && !_reloading && _more && scrollView.dragging)
     {
-     
+        
         [_refreshFooterView.indicator startAnimating];
         _refreshFooterView.infoLabel.hidden = NO;
         _reloading = YES;
@@ -274,7 +282,7 @@
     {
         _loadNext = NO;
         _currentPage = 0;
-        [self refreshData];
+        [self performSelector:@selector(refreshData) withObject:nil afterDelay:0.1];
     }
     else if (aRefreshPos == EGORefreshFooter)
     {
@@ -298,7 +306,7 @@
 {
     [self hasMore];
     _reloading = NO;
-    _loadNext = NO; 
+    _loadNext = NO;
 }
 
 - (void)hasMore
@@ -330,5 +338,10 @@
     _reloading = NO;
     _loadNext = NO;
     [super viewDidUnload];
+}
+
+- (void)dealloc
+{
+    [_tableView removeObserver:self forKeyPath:@"frame"];
 }
 @end
