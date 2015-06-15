@@ -1,7 +1,7 @@
 
 Pod::Spec.new do |s|
   s.name             = "NSUtil"
-  s.version          = "0.1.3"
+  s.version          = "0.1.4"
   s.summary          = "A short description of NSUtil."
   s.license          = 'MIT'
   s.author           = { "DevilMayCry4" => "237326369@163.com" }
