@@ -196,9 +196,4 @@ if __name__ == "__main__":
             path = sys.argv[1]
         run_main(path)
  
-//test
-//test2
-//test3
-//develper
-//develper2
-//develper3
+//hot
